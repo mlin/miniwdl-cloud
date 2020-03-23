@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: yes
+  roles:
+    - aws_fsx_lustre_client
+- hosts: all
+  become: yes
+  roles:
+    - common
+- hosts: all
+  become: yes
+  roles:
+    - aws_docker_firewall
+- hosts: all
+  become: yes
+  roles:
+    - worker_template

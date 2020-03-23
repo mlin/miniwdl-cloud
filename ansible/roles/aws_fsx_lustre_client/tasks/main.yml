@@ -1,0 +1,34 @@
+---
+- name: "pin AMI's kernel version"
+  # Pin kernel version to the one baked into AMI, because AWS publish Lustre client debs for
+  # certain kernel versions only. (Make sure this applies before any general apt upgrade)
+  dpkg_selections:
+    name: '{{ item }}'
+    selection: hold
+  loop:
+    - linux-aws
+    - linux-headers-aws
+    - linux-image-aws
+- name: AWS FSx Lustre apt key
+  apt_key:
+    url: https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-ubuntu-public-key.asc
+- name: AWS FSx Lustre apt repo
+  apt_repository:
+    repo: deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu bionic main
+- name: AWS FSx Lustre client modules
+  shell: apt-get install -y lustre-client-modules-$(uname -r) && modprobe lustre
+  changed_when: False
+- name: AWS FSx Lustre mount /mnt/shared
+  shell:
+    cmd: |
+      set -euxo pipefail
+      mkdir -p /mnt/shared
+      if ! grep /mnt/shared /etc/fstab; then
+        echo "{{ lustre_dns_name }}@tcp:/fsx /mnt/shared lustre defaults,noatime,flock,_netdev 0 0" >> /etc/fstab
+        mount --all
+        chown 1337:1337 /mnt/shared
+        chown 1337:1337 /mnt/shared/fsx || true
+      fi
+      touch /mnt/shared/.fsx
+    executable: /bin/bash
+    creates: /mnt/shared/.fsx

@@ -1,0 +1,73 @@
+---
+- name: generate jump ssh key
+  openssh_keypair:
+    path: /home/wdler/.ssh/id_rsa
+    owner: wdler
+    group: wdler
+    mode: 0400
+- name: initialize swarm manager
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ private_ip }}"
+    listen_addr: "{{ private_ip }}"
+  register: swarm_init
+- name: get swarm node info
+  docker_node_info:
+    self: true
+  register: self_node
+- name: prevent manager from accepting tasks
+  docker_node:
+    hostname: '{{ self_node.nodes[0]["ID"] }}'
+    availability: drain
+
+# deposit info in /mnt/shared/swarm for workers
+- name: /mnt/shared/swarm
+  file:
+    path: /mnt/shared/swarm/workers
+    state: directory
+- name: /mnt/shared/swarm/id_rsa.pub
+  command: cp /home/wdler/.ssh/id_rsa.pub /mnt/shared/swarm
+  changed_when: False
+- name: /mnt/shared/swarm/manager
+  copy:
+    dest: /mnt/shared/swarm/manager
+    content: "{{ private_ip }}:2377"
+- name: /mnt/shared/swarm/token
+  copy:
+    dest: /mnt/shared/swarm/token
+    content: '{{ swarm_init.swarm_facts["JoinTokens"]["Worker"] }}'
+    owner: root
+    mode: 0400
+
+# miniwdl/shell configuration
+- name: /home/wdler/.config
+  file:
+    path: /home/wdler/.config
+    state: directory
+    owner: wdler
+    group: wdler
+- name: miniwdl.cfg
+  copy:
+    src: miniwdl.cfg
+    dest: /home/wdler/.config/miniwdl.cfg
+    owner: wdler
+    group: wdler
+    mode: 0640
+- name: cd /mnt/shared
+  lineinfile: dest=/home/wdler/.profile line="cd /mnt/shared"
+  remote_user: wdler
+  become: no
+- name: motd
+  copy:
+    src: motd
+    dest: /etc/motd
+    mode: 0744
+- name: byobu-enable
+  command: byobu-enable
+  remote_user: wdler
+  become: no
+  changed_when: False
+- name: delete /home/wdler/.hushlogin
+  file:
+    path: /home/wdler/.hushlogin
+    state: absent

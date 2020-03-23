@@ -1,0 +1,53 @@
+---
+- name: "apt upgrade"
+  apt: upgrade=full autoremove=yes update_cache=yes
+- name: "common apt packages"
+  apt:
+    update_cache: yes
+    pkg:
+      - vim
+      - byobu
+      - htop
+      - sysstat
+      - tree
+      - pv
+      - jq
+      - ntp
+      - mosh
+      - dstat
+      - python3-pip
+      - docker.io
+      - iptables-persistent
+- pip:
+    name:
+      - awscli
+      - gsutil
+      - azure-cli
+      - docker
+- name: sshd keepalive
+  lineinfile: dest=/etc/ssh/sshd_config line="{{ item }}"
+  loop:
+    - ClientAliveInterval 60
+    - ClientAliveCountMax 5
+- name: user wdler
+  user:
+    name: wdler
+    shell: /bin/bash
+    uid: 1337
+    groups: docker
+    comment: Wid L. Hacker
+- authorized_key: user=wdler key="{{ lookup('file', public_key_path) }}"
+- lineinfile: dest=/etc/sudoers.d/50-wdler create=yes line="wdler ALL=(ALL) NOPASSWD:ALL"
+- file: path=/etc/sudoers.d/50-wdler owner=root group=root mode=0440
+- name: wdler nofile
+  pam_limits:
+    domain: wdler
+    limit_type: "{{ item }}"
+    limit_item: nofile
+    value: 1048576
+  loop:
+    - hard
+    - soft
+- lineinfile: dest=/home/wdler/.profile line="export TMPDIR=/mnt/scratch/tmp"
+  remote_user: wdler
+  become: no

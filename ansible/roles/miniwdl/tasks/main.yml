@@ -1,0 +1,10 @@
+---
+- name: miniwdl dependencies
+  apt:
+    pkg:
+      - shellcheck
+- name: install miniwdl
+  pip:
+    name:
+      - git+https://github.com/chanzuckerberg/miniwdl.git@{{ miniwdl_branch | default("release") }}
+      - git+https://github.com/chanzuckerberg/miniwdl.git@{{ miniwdl_branch | default("release") }}#subdirectory=examples/plugin_log_task_usage

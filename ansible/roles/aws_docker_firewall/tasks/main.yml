@@ -1,0 +1,72 @@
+---
+- name: ensure dockerd has initialized iptables by running a no-op container
+  docker_container:
+    name: nop
+    image: alpine:3
+    command: date
+    detach: no
+    cleanup: yes
+  changed_when: False
+# prevent docker containers from contacting EC2 instance metadata service (which may e.g. disponse
+# credentials for instance roles)
+- name: block EC2 instance metadata service
+  iptables:
+    chain: DOCKER-USER
+    destination: 169.254.169.254
+    jump: REJECT
+    action: insert
+- name: verify EC2 metadata service is blocked from docker containers
+  command: docker run --rm -it alpine:3 wget -qO - http://169.254.169.254
+  register: checkblock1
+  failed_when: checkblock1.rc == 0
+  changed_when: False
+# prevent docker containers from contacting swarm and Lustre ports in our VPC address space
+- name: block VPC Swarm 2376-2377
+  iptables:
+    chain: DOCKER-USER
+    protocol: tcp
+    destination: 10.0.0.0/8
+    destination_port: 2376:2377
+    jump: REJECT
+    action: insert
+- name: block VPC Swarm 7946
+  iptables:
+    chain: DOCKER-USER
+    protocol: tcp
+    destination: 10.0.0.0/8
+    destination_port: 7946
+    jump: REJECT
+    action: insert
+- name: block VPC Swarm 7946 UDP
+  iptables:
+    chain: DOCKER-USER
+    protocol: udp
+    destination: 10.0.0.0/8
+    destination_port: 7946
+    jump: REJECT
+    action: insert
+- name: block VPC Lustre 988
+  iptables:
+    chain: DOCKER-USER
+    protocol: tcp
+    destination: 10.0.0.0/8
+    destination_port: 988
+    jump: REJECT
+    action: insert
+- name: block VPC Lustre 1021-1023
+  iptables:
+    chain: DOCKER-USER
+    protocol: tcp
+    destination: 10.0.0.0/8
+    destination_port: 1021:1023
+    jump: REJECT
+    action: insert
+- name: netfilter-persistent save
+  command: netfilter-persistent save
+  changed_when: False
+- reboot:
+- name: verify EC2 metadata service remains blocked from docker containers
+  command: docker run --rm -it alpine:3 wget -qO - http://169.254.169.254
+  register: checkblock2
+  failed_when: checkblock2.rc == 0
+  changed_when: False

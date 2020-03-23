@@ -1,0 +1,31 @@
+---
+- hosts: all
+  become: yes
+  roles:
+    - aws_fsx_lustre_client
+- hosts: all
+  become: yes
+  vars:
+    - miniwdl_branch: mlin-cloud-prototype
+  roles:
+    - miniwdl
+  tasks:
+    - name: byobu-enable
+      command: byobu-enable
+      remote_user: wdler
+      become: no
+      changed_when: False
+- hosts: all
+  become: yes
+  roles:
+    - aws_docker_firewall
+  tasks:
+    - name: test miniwdl
+      command:
+        argv:
+          - /bin/bash
+          - -lc
+          - miniwdl run_self_test
+      remote_user: wdler
+      become: no
+      changed_when: False

@@ -1,0 +1,30 @@
+---
+- name: wait for /mnt/shared/swarm/token
+  wait_for:
+    path: /mnt/shared/swarm/token
+    timeout: 900
+- name: read /mnt/shared/swarm/id_rsa.pub
+  slurp: src=/mnt/shared/swarm/id_rsa.pub
+  register: id_rsa_pub
+- name: jump ssh key
+  authorized_key: user=wdler key="{{ id_rsa_pub['content'] | b64decode }}"
+- name: read /mnt/shared/swarm/token
+  slurp: src=/mnt/shared/swarm/token
+  register: token
+- name: write /root/swarm_token
+  copy:
+    dest: /root/swarm_token
+    content: "{{ token['content'] | b64decode }}"
+    mode: 0400
+- name: custom scripts
+  copy:
+    dest: /root/{{ item }}
+    src: '{{ item }}'
+    mode: 0700
+  loop:
+    - swarm_heartbeat.sh
+    - swarm_wait.sh
+- name: swarm_heartbeat cron
+  cron:
+    name: swarm_heartbeat
+    job: /root/swarm_heartbeat.sh
