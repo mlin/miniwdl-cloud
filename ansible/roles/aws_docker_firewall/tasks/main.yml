@@ -64,7 +64,8 @@
 - name: netfilter-persistent save
   command: netfilter-persistent save
   changed_when: False
-- reboot:
+- name: reboot
+  reboot:
 - name: verify EC2 metadata service remains blocked from docker containers
   command: docker run --rm -it alpine:3 wget -qO - http://169.254.169.254
   register: checkblock2

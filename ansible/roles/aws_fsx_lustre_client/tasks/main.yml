@@ -16,7 +16,7 @@
   apt_repository:
     repo: deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu bionic main
 - name: AWS FSx Lustre client modules
-  shell: apt-get install -y lustre-client-modules-$(uname -r) && modprobe lustre
+  shell: apt-get install -y lustre-client-modules-$(uname -r) && modprobe lustre  # noqa 303
   changed_when: False
 - name: AWS FSx Lustre mount /mnt/shared
   shell:

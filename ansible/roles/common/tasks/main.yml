@@ -18,7 +18,8 @@
       - python3-pip
       - docker.io
       - iptables-persistent
-- pip:
+- name: PyPI packages
+  pip:
     name:
       - awscli
       - gsutil
@@ -36,9 +37,16 @@
     uid: 1337
     groups: docker
     comment: Wid L. Hacker
-- authorized_key: user=wdler key="{{ lookup('file', public_key_path) }}"
-- lineinfile: dest=/etc/sudoers.d/50-wdler create=yes line="wdler ALL=(ALL) NOPASSWD:ALL"
-- file: path=/etc/sudoers.d/50-wdler owner=root group=root mode=0440
+- name: wdler SSH key
+  authorized_key: user=wdler key="{{ lookup('file', public_key_path) }}"
+- name: wlder sudoers
+  lineinfile:
+    dest: /etc/sudoers.d/50-wdler
+    line: wdler ALL=(ALL) NOPASSWD:ALL
+    create: yes
+    owner: root
+    group: root
+    mode: 0440
 - name: wdler nofile
   pam_limits:
     domain: wdler
@@ -48,6 +56,7 @@
   loop:
     - hard
     - soft
-- lineinfile: dest=/home/wdler/.profile line="export TMPDIR=/mnt/scratch/tmp"
+- name: wdler TMPDIR
+  lineinfile: dest=/home/wdler/.profile line="export TMPDIR=/mnt/scratch/tmp"
   remote_user: wdler
   become: no
