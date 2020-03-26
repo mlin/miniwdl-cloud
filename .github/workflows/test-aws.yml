@@ -40,7 +40,7 @@ jobs:
     - name: install terraform
       run: |
         wget -nv https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-        unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+        unzip -o terraform_${TERRAFORM_VERSION}_linux_amd64.zip
         cp terraform /usr/local/bin
 
     - name: terraform init
