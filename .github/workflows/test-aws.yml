@@ -22,14 +22,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: generate ~/.aws/config
-      # we don't use the official AWS Credentials Action because it needs the TagSession power
+    - name: generate AWS credentials files
+      # Memorializing roadbumps getting our IAM role to work:
+      # 1. We don't use the official AWS Credentials Action because it needs the TagSession power
+      # 2. If AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY env vars are defined as such, then boto3
+      #    doesn't look in ~/.aws at all; so we prefixed them with underscores above.
       run: |
         mkdir -p ~/.aws
         echo -e "[default]\nregion = us-west-2\n[profile aws-test]\nrole_arn = ${AWS_ROLE_TO_ASSUME}\nsource_profile = default" > ~/.aws/config
         echo -e "[default]\naws_access_key_id = ${_AWS_ACCESS_KEY_ID}\naws_secret_access_key = ${_AWS_SECRET_ACCESS_KEY}" > ~/.aws/credentials
 
-    - name: verify AWS credentials
-      run: |
-        >&2 cat ~/.aws/config
-        aws s3 ls s3://czi.miniwdl-test/ --debug
+    - name: verify working AWS credentials
+      run: aws s3 ls s3://czi.miniwdl-test/
