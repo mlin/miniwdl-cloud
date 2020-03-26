@@ -33,6 +33,7 @@ jobs:
         mkdir -p ~/.aws
         echo -e "[default]\nregion = us-west-2\n[profile aws-test]\nrole_arn = ${AWS_ROLE_TO_ASSUME}\nsource_profile = default" > ~/.aws/config
         echo -e "[default]\naws_access_key_id = ${_AWS_ACCESS_KEY_ID}\naws_secret_access_key = ${_AWS_SECRET_ACCESS_KEY}" > ~/.aws/credentials
+        >&2 echo "$HOME"
 
     - name: verify working AWS credentials
       run: aws s3 ls s3://czi.miniwdl-test/
