@@ -19,7 +19,7 @@ jobs:
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
       AWS_SDK_LOAD_CONFIG: 1
       AWS_PROFILE: aws-test
-      TERRAFORM_ARGS: -auto-approve -var=owner_tag='mlin@contractor.chanzuckerberg.com' -var=s3bucket=czi.miniwdl-test .
+      TERRAFORM_ARGS: -auto-approve -var=owner_tag='mlin@contractor.chanzuckerberg.com' -var=s3bucket=czi.miniwdl-test
 
     steps:
     - uses: actions/checkout@v2
@@ -33,31 +33,22 @@ jobs:
         mkdir -p ~/.aws
         echo -e "[default]\nregion = us-west-2\n[profile aws-test]\nrole_arn = ${AWS_ROLE_TO_ASSUME}\nsource_profile = default" > ~/.aws/config
         echo -e "[default]\naws_access_key_id = ${_AWS_ACCESS_KEY_ID}\naws_secret_access_key = ${_AWS_SECRET_ACCESS_KEY}" > ~/.aws/credentials
-        >&2 echo "$HOME"
 
     - name: verify working AWS credentials
       run: aws s3 ls s3://czi.miniwdl-test/
 
+    - name: install terraform
+      run: |
+        wget -nv https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+        unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+        cp terraform /usr/local/bin
+
     - name: terraform init
-      uses: hashicorp/terraform-github-actions@master
-      with:
-        tf_actions_version: ${{ env.TERRAFORM_VERSION }}
-        tf_actions_subcommand: init
-        tf_actions_working_dir: terraform/aws/swarm
+      run: terraform init terraform/aws/swarm
 
     - name: terraform apply
-      uses: hashicorp/terraform-github-actions@master
-      with:
-        tf_actions_version: ${{ env.TERRAFORM_VERSION }}
-        tf_actions_subcommand: apply
-        tf_actions_working_dir: terraform/aws/swarm
-        args: ${{ env.TERRAFORM_ARGS }}
+      run: terraform apply $TERRAFORM_ARGS terraform/aws/swarm
 
     - name: terraform destroy
       if: always()
-      uses: hashicorp/terraform-github-actions@master
-      with:
-        tf_actions_version: ${{ env.TERRAFORM_VERSION }}
-        tf_actions_subcommand: destroy
-        tf_actions_working_dir: terraform/aws/swarm
-        args: ${{ env.TERRAFORM_ARGS }}
+      run: terraform destroy $TERRAFORM_ARGS terraform/aws/swarm
