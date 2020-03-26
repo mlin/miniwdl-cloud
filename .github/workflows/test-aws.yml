@@ -17,6 +17,7 @@ jobs:
       _AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       _AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+      AWS_SDK_LOAD_CONFIG: 1
       AWS_PROFILE: aws-test
       TERRAFORM_ARGS: -auto-approve -var=owner_tag='mlin@contractor.chanzuckerberg.com' -var=s3bucket=czi.miniwdl-test .
 
