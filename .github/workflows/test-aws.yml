@@ -18,6 +18,7 @@ jobs:
       AWS_DEFAULT_REGION: us-west-2
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
 
     steps:
     - uses: actions/checkout@v2
@@ -26,8 +27,7 @@ jobs:
       # we don't use the official AWS Credentials Action because it needs the TagSession power
       run: |
         mkdir -p ~/.aws
-        echo -e '[profile aws-test]\nrole_arn = {{ secrets.AWS_ROLE_TO_ASSUME }}' >> ~/.aws/config
-        >&2 cat ~/.aws/config
+        echo -e "[profile aws-test]\nrole_arn = $AWS_ROLE_TO_ASSUME" >> ~/.aws/config
 
     - name: verify AWS credentials
       run: aws s3 ls s3://czi.miniwdl-test/
