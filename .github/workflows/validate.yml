@@ -1,15 +1,11 @@
-# This is a basic workflow to help you get started with Actions
+name: validate
 
-name: CI
-
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on: [push, pull_request]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  validate:
+  terraform:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     env:
@@ -45,6 +41,8 @@ jobs:
         tf_actions_working_dir: 'terraform/aws/swarm'
         tf_actions_comment: true
 
+  ansible:
+    runs-on: ubuntu-latest
     - name: ansible-lint
       uses: ansible/ansible-lint-action@master
       with:
