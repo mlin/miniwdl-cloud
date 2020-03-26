@@ -1,6 +1,8 @@
 # miniwdl-cloud
 
-Orchestrate a cloud fleet to run [WDL](https://openwdl.org/) workflows using [miniwdl](https://github.com/chanzuckerberg/miniwdl) and [Docker Swarm mode](https://docs.docker.com/engine/swarm/). This is for advanced operators who are comfortable with provisioning infrastructure using [Terraform](https://www.terraform.io/) and [Ansible](https://www.ansible.com/) in their own cloud account. AWS is targeted initially, and we'd love help with other clouds!
+Orchestrate a cloud fleet to run [WDL](https://openwdl.org/) workflows using [miniwdl](https://github.com/chanzuckerberg/miniwdl) and [Docker Swarm mode](https://docs.docker.com/engine/swarm/). This is for advanced operators who are comfortable with provisioning infrastructure using [Terraform](https://www.terraform.io/) and [Ansible](https://www.ansible.com/) in their own cloud account, and then SSHing into it to invoke `miniwdl run`.
+
+AWS is targeted initially, and we'd love help with other clouds!
 
 ## Overview of moving parts (AWS)
 
@@ -22,19 +24,22 @@ Orchestrate a cloud fleet to run [WDL](https://openwdl.org/) workflows using [mi
 ## Quick start
 
 Requires: 
-* terraform
-* ansible
-* AWS CLI, configured
-* mosh
+* [terraform](https://www.terraform.io/downloads.html)
+* [ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html), configured with [credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) and, if applicable, [role](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html)
+* [mosh](https://mosh.org/#getting) (recommended to improve SSH experience)
 * your SSH key in `~/.ssh/id_rsa[.pub]`
 
 ```
 terraform init terraform/aws/swarm
 terraform apply \
-    -var=owner_tag=YOUR_NAME \
-    -var=s3bucket=YOUR_BUCKET \
-    terraform/aws/swarm
+    -var=owner_tag=YOUR_NAME \   # Owner tag set on each AWS resource
+    -var=s3bucket=YOUR_BUCKET \  # name of S3 bucket to associate with FSx Lustre
+    terraform/aws/swarm          # see optional variables in terraform/aws/swarm/variables.tf
+
 mosh wdler@$(terraform output manager_ip)
+
+miniwdl run_self_test --dir /mnt/shared/test
 ```
 
 Overview of Terraform-automated launch sequence:
@@ -45,3 +50,5 @@ Overview of Terraform-automated launch sequence:
 4. Launch worker template instance and provision with Ansible roles (poise to join swarm on boot)
 5. Create AMI from stopped worker template instance
 6. Issue worker spot instance requests using AMI
+
+This typically takes about 10 minutes.
