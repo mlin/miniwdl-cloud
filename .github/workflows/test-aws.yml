@@ -37,6 +37,9 @@ jobs:
     - name: verify working AWS credentials
       run: aws s3 ls s3://czi.miniwdl-test/
 
+    - name: generate SSH key
+      run: ssh-keygen -t rsa -q -N ""
+
     - name: install terraform
       # the official hashicorp terraform actions have problems finding our AWS credentials files
       run: |
