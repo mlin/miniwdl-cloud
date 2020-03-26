@@ -26,7 +26,8 @@ jobs:
       # we don't use the official AWS Credentials Action because it needs the TagSession power
       run: |
         mkdir -p ~/.aws
-        echo -e '[profile aws-test]\nrole_arn = {{ AWS_ROLE_TO_ASSUME }}' >> ~/.aws/config
+        echo -e '[profile aws-test]\nrole_arn = {{ secrets.AWS_ROLE_TO_ASSUME }}' >> ~/.aws/config
+        >&2 cat ~/.aws/config
 
     - name: verify AWS credentials
       run: aws s3 ls s3://czi.miniwdl-test/
