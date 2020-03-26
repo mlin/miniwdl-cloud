@@ -14,17 +14,13 @@ jobs:
     env:
       TERRAFORM_VERSION: 0.12.24
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+      AWS_DEFAULT_REGION: us-west-2
 
     steps:
     - uses: actions/checkout@v2
-
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-west-2
-        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
 
     - name: verify AWS credentials
       run: aws s3 ls s3://czi.miniwdl-test/
