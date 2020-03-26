@@ -46,8 +46,8 @@ jobs:
         tf_actions_comment: true
 
     - name: ansible-lint
-      uses: ansible/ansible-lint-action@v4.1.0.post0
+      uses: ansible/ansible-lint-action@master
       with:
         targets: |
-          ansible/aws_manager.yml
-          ansible/aws_worker_template.yml
+          ./ansible/aws_manager.yml
+          ./ansible/aws_worker_template.yml
