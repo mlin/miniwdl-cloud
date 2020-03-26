@@ -14,11 +14,10 @@ jobs:
     env:
       TERRAFORM_VERSION: 0.12.24
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      _AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      _AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
       AWS_PROFILE: aws-test
-      AWS_DEFAULT_REGION: us-west-2
 
     steps:
     - uses: actions/checkout@v2
@@ -27,7 +26,8 @@ jobs:
       # we don't use the official AWS Credentials Action because it needs the TagSession power
       run: |
         mkdir -p ~/.aws
-        echo -e "[profile aws-test]\nrole_arn = $AWS_ROLE_TO_ASSUME\ncredential_source = Environment" >> ~/.aws/config
+        echo -e "[default]\nregion = us-west-2\n[profile aws-test]\nrole_arn = ${AWS_ROLE_TO_ASSUME}\nsource_profile = default" >> ~/.aws/config
+        echo -e "[default]\naws_access_key_id = ${_AWS_ACCESS_KEY_ID}\naws_secret_access_key = ${_AWS_SECRET_ACCESS_KEY}"
 
     - name: verify AWS credentials
       run: |
