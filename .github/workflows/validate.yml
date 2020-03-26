@@ -43,6 +43,7 @@ jobs:
 
   ansible:
     runs-on: ubuntu-latest
+    steps:
     - name: ansible-lint
       uses: ansible/ansible-lint-action@master
       with:
