@@ -26,8 +26,8 @@ jobs:
       # we don't use the official AWS Credentials Action because it needs the TagSession power
       run: |
         mkdir -p ~/.aws
-        echo -e "[default]\nregion = us-west-2\n[profile aws-test]\nrole_arn = ${AWS_ROLE_TO_ASSUME}\nsource_profile = default" >> ~/.aws/config
-        echo -e "[default]\naws_access_key_id = ${_AWS_ACCESS_KEY_ID}\naws_secret_access_key = ${_AWS_SECRET_ACCESS_KEY}"
+        echo -e "[default]\nregion = us-west-2\n[profile aws-test]\nrole_arn = ${AWS_ROLE_TO_ASSUME}\nsource_profile = default" > ~/.aws/config
+        echo -e "[default]\naws_access_key_id = ${_AWS_ACCESS_KEY_ID}\naws_secret_access_key = ${_AWS_SECRET_ACCESS_KEY}" > ~/.aws/credentials
 
     - name: verify AWS credentials
       run: |
