@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TERRAFORM_VERSION: 0.12.24
+      PATH: ${{ env.HOME }}/.local/bin:${{ env.PATH }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       _AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       _AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -38,10 +39,12 @@ jobs:
       run: aws s3 ls s3://czi.miniwdl-test/
 
     - name: install terraform
+      # the official hashicorp terraform actions have problems finding our AWS credentials files
       run: |
         cd $(mktemp -d)
         wget -nv https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
         unzip -o terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+        mkdir -p ~/.local/bin
         cp terraform ~/.local/bin
 
     - name: terraform init
