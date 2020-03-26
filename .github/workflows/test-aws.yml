@@ -46,7 +46,7 @@ jobs:
       run: terraform apply $TERRAFORM_ARGS -var=name_tag_prefix=miniwdl-test-$(git describe --tags --long --dirty --always) terraform/aws/swarm
 
     - name: miniwdl run_self_test
-      run: ssh wdler@$(terraform output manager_ip) miniwdl run_self_test --dir /mnt/shared/test
+      run: ssh wdler@$(terraform output manager_ip) miniwdl run_self_test --dir /mnt/shared
 
     - name: terraform destroy
       if: always()
