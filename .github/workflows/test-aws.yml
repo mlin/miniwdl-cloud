@@ -47,17 +47,19 @@ jobs:
         cp terraform ~/.local/bin
 
     - name: terraform init
-      run: terraform init terraform/aws/swarm
+      run: |
+        echo $PATH
+        terraform init terraform/aws/swarm
       env:
-        PATH: ${{ env.HOME }}/.local/bin:${{ env.PATH }}
+        PATH: "{{ env.HOME }}/.local/bin:{{ env.PATH }}"
 
     - name: terraform apply
       run: terraform apply $TERRAFORM_ARGS terraform/aws/swarm
       env:
-        PATH: ${{ env.HOME }}/.local/bin:${{ env.PATH }}
+        PATH: "{{ env.HOME }}/.local/bin:{{ env.PATH }}"
 
     - name: terraform destroy
       if: always()
       run: terraform destroy $TERRAFORM_ARGS terraform/aws/swarm
       env:
-        PATH: ${{ env.HOME }}/.local/bin:${{ env.PATH }}
+        PATH: "${{ env.HOME }}/.local/bin:{{ env.PATH }}"
