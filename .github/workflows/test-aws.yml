@@ -18,6 +18,7 @@ jobs:
       _AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
       AWS_PROFILE: aws-test
+      TERRAFORM_ARGS: -auto-approve=yes -var=owner_tag=mlin@contractor.chanzuckerberg.com -var=s3bucket=czi.miniwdl-test
 
     steps:
     - uses: actions/checkout@v2
@@ -34,3 +35,27 @@ jobs:
 
     - name: verify working AWS credentials
       run: aws s3 ls s3://czi.miniwdl-test/
+
+    - name: terraform init
+      uses: hashicorp/terraform-github-actions@master
+      with:
+        tf_actions_version: ${{ env.TERRAFORM_VERSION }}
+        tf_actions_subcommand: init
+        tf_actions_working_dir: terraform/aws/swarm
+
+    - name: terraform apply
+      uses: hashicorp/terraform-github-actions@master
+      with:
+        tf_actions_version: ${{ env.TERRAFORM_VERSION }}
+        tf_actions_subcommand: apply
+        tf_actions_working_dir: terraform/aws/swarm
+        args: ${{ env.TERRAFORM_ARGS }}
+
+    - name: terraform destroy
+      if: always()
+      uses: hashicorp/terraform-github-actions@master
+      with:
+        tf_actions_version: ${{ env.TERRAFORM_VERSION }}
+        tf_actions_subcommand: destroy
+        tf_actions_working_dir: terraform/aws/swarm
+        args: ${{ env.TERRAFORM_ARGS }}
