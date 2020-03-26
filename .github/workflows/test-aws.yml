@@ -12,7 +12,6 @@ jobs:
   swarm:
     runs-on: ubuntu-latest
     env:
-      TERRAFORM_VERSION: 0.12.24
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       _AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       _AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -40,24 +39,15 @@ jobs:
     - name: generate SSH key
       run: ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -N ""
 
-    - name: install terraform
-      # the official hashicorp terraform actions have problems finding our AWS credentials files
-      run: |
-        cd $(mktemp -d)
-        wget -nv https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-        unzip -o terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-        mkdir -p ~/.local/bin
-        cp terraform ~/.local/bin
-
     - name: terraform init
-      run: ~/.local/bin/terraform init terraform/aws/swarm
+      run: terraform init terraform/aws/swarm
 
     - name: terraform apply
-      run: ~/.local/bin/terraform apply $TERRAFORM_ARGS -var=name_tag_prefix=miniwdl-test-$(git describe --tags --long --dirty --always) terraform/aws/swarm
+      run: terraform apply $TERRAFORM_ARGS -var=name_tag_prefix=miniwdl-test-$(git describe --tags --long --dirty --always) terraform/aws/swarm
 
     - name: miniwdl run_self_test
       run: ssh wdler@$(terraform output manager_ip) miniwdl run_self_test --dir /mnt/shared/test
 
     - name: terraform destroy
       if: always()
-      run: ~/.local/bin/terraform destroy $TERRAFORM_ARGS -var=name_tag_prefix=miniwdl-test-$(git describe --tags --long --dirty --always) terraform/aws/swarm
+      run: terraform destroy $TERRAFORM_ARGS -var=name_tag_prefix=miniwdl-test-$(git describe --tags --long --dirty --always) terraform/aws/swarm
