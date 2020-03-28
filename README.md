@@ -12,7 +12,7 @@ AWS is targeted initially, and we'd love help with other clouds!
 * Manager instance (small, on-demand) hosts user SSH session, `miniwdl run`, and Docker Swarm manager
 * Worker instances (large, spot) host WDL task containers, scheduled by miniwdl via Docker Swarm
 * Docker Swarm multiplexes WDL tasks onto workers based on their CPU/memory requirements
-* Worker fleet size dynamically scalable by a variable supplied to `terraform apply`
+* Scale worker fleet as needed with `terraform apply ... -var=worker_count=N`
 * VPC exposes only the the manager's SSH (and [mosh](https://mosh.org/)) to remote access
 
 **Storage:**
