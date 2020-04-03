@@ -55,7 +55,7 @@ resource "aws_spot_instance_request" "monolith" {
   }
 
   provisioner "local-exec" {
-    command     = "ansible-playbook -u ubuntu -i '${self.public_ip},' --private-key ${var.private_key_path} --extra-vars 'public_key_path=${var.public_key_path} lustre_dns_name=${module.common.lustre_dns_name}' aws_monolith.yml"
+    command     = "ansible-playbook -u ubuntu -i '${self.public_ip},' --private-key ${var.private_key_path} --extra-vars 'public_key_path=${var.public_key_path} lustre_dns_name=${module.common.lustre_dns_name} miniwdl_branch=${var.miniwdl_branch}' aws_monolith.yml"
     working_dir = "${path.module}/../../../ansible"
   }
 }

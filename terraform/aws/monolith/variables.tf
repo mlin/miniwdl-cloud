@@ -39,3 +39,7 @@ variable "instance_type" {
   description = "EC2 instance type (should have NVMe instance store volumes)"
   default     = "m5d.4xlarge"
 }
+variable "miniwdl_branch" {
+  description = "branch of chanzuckerberg/miniwdl to install on manager"
+  default     = "release"
+}

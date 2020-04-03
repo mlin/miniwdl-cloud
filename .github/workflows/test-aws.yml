@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - test-aws
+      - wip-aws
   pull_request:
     branches:
       - test-aws
+      - wip-aws
 
 jobs:
   swarm:
@@ -18,7 +20,7 @@ jobs:
       AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
       AWS_SDK_LOAD_CONFIG: 1
       AWS_PROFILE: aws-test
-      TERRAFORM_ARGS: -auto-approve -var=owner_tag=mlin@contractor.chanzuckerberg.com -var=s3bucket=czi.miniwdl-test
+      TERRAFORM_ARGS: -auto-approve -var=miniwdl_branch=stress-test -var=owner_tag=mlin@contractor.chanzuckerberg.com -var=s3bucket=czi.miniwdl-test
 
     steps:
     - uses: actions/checkout@v2
@@ -47,6 +49,12 @@ jobs:
 
     - name: miniwdl run_self_test
       run: ssh wdler@$(terraform output manager_ip) miniwdl run_self_test --dir /mnt/shared
+
+    - name: test_containment.sh
+      run: |
+        manager_ip=$(terraform output manager_ip)
+        scp test/test_containment.sh wdler@${manager_ip}:/home/wdler/
+        ssh wdler@${manager_ip} /bin/bash /home/wdler/test_containment.sh
 
     - name: terraform destroy
       if: always()

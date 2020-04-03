@@ -51,4 +51,4 @@ Overview of Terraform-automated launch sequence:
 5. Create AMI from stopped worker template instance
 6. Issue worker spot instance requests using AMI
 
-This typically takes about 10 minutes.
+This typically takes about 15 minutes.

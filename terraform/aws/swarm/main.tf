@@ -110,7 +110,7 @@ resource "aws_eip" "manager_eip" {
   }
 
   provisioner "local-exec" {
-    command     = "ansible-playbook -u ubuntu -i '${self.public_ip},' --private-key ${var.private_key_path} --extra-vars 'private_ip=${self.private_ip} public_key_path=${var.public_key_path} lustre_dns_name=${module.common.lustre_dns_name}' aws_manager.yml"
+    command     = "ansible-playbook -u ubuntu -i '${self.public_ip},' --private-key ${var.private_key_path} --extra-vars 'private_ip=${self.private_ip} public_key_path=${var.public_key_path} lustre_dns_name=${module.common.lustre_dns_name} miniwdl_branch=${var.miniwdl_branch}' aws_manager.yml"
     working_dir = "${path.module}/../../../ansible"
   }
 }

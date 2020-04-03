@@ -5,8 +5,6 @@
     - aws_fsx_lustre_client
 - hosts: all
   become: yes
-  vars:
-    - miniwdl_branch: mlin-cloud-prototype
   roles:
     - miniwdl
 - hosts: all

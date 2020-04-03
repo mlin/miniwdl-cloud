@@ -40,6 +40,10 @@ variable "manager_instance_type" {
   description = "EC2 on-demand instance type for manager node"
   default     = "t3a.medium"
 }
+variable "miniwdl_branch" {
+  description = "branch of chanzuckerberg/miniwdl to install on manager"
+  default     = "release"
+}
 variable "worker_instance_type" {
   description = "EC2 spot instance type for task workers (should have NVMe instance store volumes)"
   default     = "m5d.4xlarge"
