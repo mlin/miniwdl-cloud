@@ -26,8 +26,6 @@
       if ! grep /mnt/shared /etc/fstab; then
         echo "{{ lustre_dns_name }}@tcp:/fsx /mnt/shared lustre defaults,noatime,flock,_netdev 0 0" >> /etc/fstab
         mount --all
-        chown 1337:1337 /mnt/shared
-        chown 1337:1337 /mnt/shared/fsx || true
       fi
       touch /mnt/shared/.fsx
     executable: /bin/bash

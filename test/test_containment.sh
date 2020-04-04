@@ -65,4 +65,4 @@ miniwdl run ~/test_containment.wdl \
   firewall.blocklist=10.0.1.1:2377 \
   firewall.blocklist=10.0.1.1:7946 \
   firewall.blocklist=169.254.169.254:80 \
-  --verbose --dir /mnt/shared
+  --verbose --dir /mnt/shared/runs

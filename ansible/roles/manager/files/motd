@@ -4,7 +4,7 @@ miniwdl swarm
 * Worker nodes host task containers scheduled by miniwdl via Swarm
 * All nodes mount a shared file system at /mnt/shared
 * Stage input files somewhere under /mnt/shared
-* `miniwdl run' in a working directory under /mnt/shared (or set --dir)
+* `miniwdl run' in a working directory under /mnt/shared/runs (or set --dir there)
 * `docker node ls' to view worker status
 * `docker service ls' to view pending & running WDL tasks
-* `miniwdl run_self_test --dir /mnt/shared/test' to self-test
+* `miniwdl run_self_test --dir /mnt/shared/runs' to self-test

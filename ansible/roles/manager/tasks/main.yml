@@ -53,8 +53,14 @@
     owner: wdler
     group: wdler
     mode: 0640
-- name: cd /mnt/shared
-  lineinfile: dest=/home/wdler/.profile line="cd /mnt/shared"
+- name: prepare /mnt/shared/runs
+  file:
+    path: /mnt/shared/runs
+    state: directory
+    owner: wdler
+    group: wdler
+- name: cd /mnt/shared/runs
+  lineinfile: dest=/home/wdler/.profile line="cd /mnt/shared/runs"
   remote_user: wdler
   become: no
 - name: motd
