@@ -3,16 +3,17 @@ provider "aws" {
 }
 
 module "common" {
-  source            = "../modules/common"
-  name_tag_prefix   = var.name_tag_prefix
-  owner_tag         = var.owner_tag
-  availability_zone = var.availability_zone
-  public_key_path   = var.public_key_path
-  private_key_path  = var.private_key_path
-  lustre_GiB        = var.lustre_GiB
-  s3bucket          = var.s3bucket
-  inputs_prefix     = var.inputs_prefix
-  outputs_prefix    = var.outputs_prefix
+  source                               = "../modules/common"
+  name_tag_prefix                      = var.name_tag_prefix
+  owner_tag                            = var.owner_tag
+  availability_zone                    = var.availability_zone
+  public_key_path                      = var.public_key_path
+  private_key_path                     = var.private_key_path
+  lustre_GiB                           = var.lustre_GiB
+  s3bucket                             = var.s3bucket
+  inputs_prefix                        = var.inputs_prefix
+  outputs_prefix                       = var.outputs_prefix
+  lustre_weekly_maintenance_start_time = var.lustre_weekly_maintenance_start_time
 }
 
 resource "aws_spot_instance_request" "monolith" {

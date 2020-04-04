@@ -32,3 +32,10 @@
       touch /mnt/shared/.fsx
     executable: /bin/bash
     creates: /mnt/shared/.fsx
+- name: fsx_to_s3
+  copy:
+    src: fsx_to_s3
+    dest: /usr/local/bin/fsx_to_s3
+    owner: root
+    group: root
+    mode: 0775

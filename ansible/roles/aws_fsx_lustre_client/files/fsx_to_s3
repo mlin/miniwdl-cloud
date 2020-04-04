@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -eu
+
+if [[ $# -ne 1 ]] || [[ $1 == "-h" ]] || [[ $1 == "-help" ]] || [[ $1 == "--help" ]]; then
+    echo "Usage: fsx_to_s3 FILE_OR_DIR"
+    echo "Write a file or directory under /mnt/shared back to the pre-configured S3 bucket, synchronously"
+    exit 2
+fi
+
+
+# initiate archive job(s)
+if [[ -L $1 ]]; then
+    >&2 echo "cannot operate on symlink: $1"
+    exit 1
+elif [[ -f $1 || -d $1 ]]; then
+    find "$1" -type f -print0 | xargs -0 -n 1 -P 16 sudo lfs hsm_archive
+else
+    >&2 echo "file/directory not found: $1"
+    exit 1
+fi
+
+# wait for job(s) to complete
+while [[ $(find "$1" -type f -print0 | xargs -0 -n 1 -P 16 sudo lfs hsm_action | grep -c ARCHIVE) -gt 0 ]]; do
+    sleep 2
+done
