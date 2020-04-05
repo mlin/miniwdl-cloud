@@ -20,21 +20,26 @@
     hostname: '{{ self_node.nodes[0]["ID"] }}'
     availability: drain
 
-# deposit info in /mnt/shared/swarm for workers
-- name: /mnt/shared/swarm
+# deposit info in /mnt/shared/.swarm for workers
+- name: /mnt/shared/.swarm
   file:
-    path: /mnt/shared/swarm/workers
+    path: /mnt/shared/.swarm/workers
     state: directory
-- name: /mnt/shared/swarm/id_rsa.pub
-  command: cp /home/wdler/.ssh/id_rsa.pub /mnt/shared/swarm
+- name: /mnt/shared/.swarm/README
+  copy:
+    src: swarmREADME
+    dest: /mnt/shared/.swarm/README
+    mode: 0664
+- name: /mnt/shared/.swarm/id_rsa.pub
+  command: cp /home/wdler/.ssh/id_rsa.pub /mnt/shared/.swarm
   changed_when: False
-- name: /mnt/shared/swarm/manager
+- name: /mnt/shared/.swarm/manager
   copy:
-    dest: /mnt/shared/swarm/manager
+    dest: /mnt/shared/.swarm/manager
     content: "{{ private_ip }}:2377"
-- name: /mnt/shared/swarm/token
+- name: /mnt/shared/.swarm/token
   copy:
-    dest: /mnt/shared/swarm/token
+    dest: /mnt/shared/.swarm/token
     content: '{{ swarm_init.swarm_facts["JoinTokens"]["Worker"] }}'
     owner: root
     mode: 0400

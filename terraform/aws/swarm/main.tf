@@ -124,7 +124,7 @@ resource "aws_instance" "worker_template" {
   key_name               = module.common.ec2_key_name
 
   root_block_device {
-    volume_size = 16
+    volume_size = 10
   }
 
   tags = {

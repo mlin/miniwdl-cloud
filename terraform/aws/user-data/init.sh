@@ -37,9 +37,9 @@ systemctl restart docker || true
 
 # join swarm, if applicable
 if [ -f /root/swarm_token ]; then  # if on worker node (/root/swarm_token baked into AMI)
-    rm -f /mnt/shared/swarm/token
+    rm -f /mnt/shared/.swarm/token
     docker swarm join \
         --advertise-addr "$(curl http://169.254.169.254/latest/meta-data/local-ipv4)" \
         --token "$(cat /root/swarm_token)" \
-        "$(cat /mnt/shared/swarm/manager)"
+        "$(cat /mnt/shared/.swarm/manager)"
 fi
