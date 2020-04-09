@@ -16,15 +16,3 @@
     dest: /root/swarm_token
     content: "{{ token['content'] | b64decode }}"
     mode: 0400
-- name: custom scripts
-  copy:
-    dest: /root/{{ item }}
-    src: '{{ item }}'
-    mode: 0700
-  loop:
-    - swarm_heartbeat.sh
-    - swarm_wait.sh
-- name: swarm_heartbeat cron
-  cron:
-    name: swarm_heartbeat
-    job: /root/swarm_heartbeat.sh

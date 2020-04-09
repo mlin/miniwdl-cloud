@@ -73,13 +73,6 @@ resource "aws_security_group" "sg_swarm" {
   }
 }
 
-data "template_cloudinit_config" "test_user_data" {
-  part {
-    content_type = "text/x-shellscript"
-    content      = file("${path.module}/../user-data/init.sh")
-  }
-}
-
 resource "aws_instance" "manager" {
   ami                    = module.common.ubuntu_ami_id
   instance_type          = var.manager_instance_type
@@ -87,7 +80,7 @@ resource "aws_instance" "manager" {
   subnet_id              = module.common.subnet_id
   vpc_security_group_ids = [module.common.sg_mosh_id, module.common.sg_lustre_id, aws_security_group.sg_swarm_manager.id, aws_security_group.sg_swarm.id]
   key_name               = module.common.ec2_key_name
-  user_data_base64       = data.template_cloudinit_config.test_user_data.rendered
+  user_data_base64       = filebase64("${path.module}/../user-data/init.sh")
 
   root_block_device {
     volume_size = 40
@@ -178,6 +171,18 @@ resource "aws_ami_from_instance" "worker_ami" {
   }
 }
 
+data "template_cloudinit_config" "worker_data" {
+  part {
+    content_type = "text/x-shellscript"
+    content      = file("${path.module}/../user-data/init.sh")
+  }
+
+  part {
+    content_type = "text/x-shellscript"
+    content      = file("${path.module}/../user-data/init-worker.sh")
+  }
+}
+
 resource "aws_spot_instance_request" "worker" {
   count                  = var.worker_count
   spot_type              = "persistent"
@@ -187,7 +192,7 @@ resource "aws_spot_instance_request" "worker" {
   subnet_id              = module.common.subnet_id
   vpc_security_group_ids = [module.common.sg_lustre_id, aws_security_group.sg_swarm.id]
   key_name               = module.common.ec2_key_name
-  user_data_base64       = data.template_cloudinit_config.test_user_data.rendered
+  user_data_base64       = data.template_cloudinit_config.worker_data.rendered
 
   tags = {
     Name  = "${var.name_tag_prefix}_worker"
