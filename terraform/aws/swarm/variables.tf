@@ -26,7 +26,7 @@ variable "lustre_GiB" {
   default     = 1200
 }
 variable "lustre_weekly_maintenance_start_time" {
-  description = "weekly UTC start time of FSX for Lustre 30-minute maintenance windows (%u:%H:%M). Consider setting to: date --date @$((`date +%s` - 1860)) -u +%u:%H:%M"
+  description = "weekly UTC start time of FSX for Lustre 30-minute maintenance window (%u:%H:%M). Consider setting to: date --date @$((`date +%s` - 1860)) -u +%u:%H:%M"
   default     = "1:00:00"
 }
 variable "s3bucket" {
@@ -57,6 +57,6 @@ variable "persistent_worker_count" {
   default     = 1
 }
 variable "burst_worker_count" {
-  description = "Number of one-time spot instance workers (doesn't regenerate after spot interruption or 30min idle)"
+  description = "Number of one-time spot instance workers (no auto-regeneration after spot interruption or 30min idle)"
   default     = 1
 }
