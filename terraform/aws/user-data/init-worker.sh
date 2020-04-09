@@ -1,12 +1,13 @@
 #!/bin/bash
+# runs on first boot of a worker
 set -euxo pipefail
 
 # join swarm
+rm -f /mnt/shared/.swarm/token
 docker swarm join \
     --advertise-addr "$(curl http://169.254.169.254/latest/meta-data/local-ipv4)" \
     --token "$(cat /root/swarm_token)" \
     "$(cat /mnt/shared/.swarm/manager)"
-rm -f /mnt/shared/.swarm/token
 
 # enable swarm-heartbeat.sh cron job
 cat << 'EOF' > /root/swarm_heartbeat.sh

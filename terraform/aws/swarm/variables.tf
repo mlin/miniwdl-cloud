@@ -52,7 +52,11 @@ variable "worker_instance_type" {
   description = "EC2 spot instance type for task workers (should have NVMe instance store volumes)"
   default     = "m5d.4xlarge"
 }
-variable "worker_count" {
-  description = "Number of worker spot instances to launch"
-  default     = 2
+variable "persistent_worker_count" {
+  description = "Number of persistent spot instance workers"
+  default     = 1
+}
+variable "burst_worker_count" {
+  description = "Number of one-time spot instance workers (doesn't regenerate after spot interruption or 30min idle)"
+  default     = 1
 }

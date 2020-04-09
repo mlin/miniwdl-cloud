@@ -76,6 +76,7 @@ jobs:
 
     - name: worker sentinel files
       run: |
+        date
         ssh wdler@${MANAGER_IP} tree -aD /mnt/shared/.swarm
         ssh wdler@${MANAGER_IP} find /mnt/shared/.swarm/workers -type f | grep -c .
 
