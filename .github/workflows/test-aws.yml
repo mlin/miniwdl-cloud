@@ -74,6 +74,12 @@ jobs:
         aws s3 ls --recursive s3://czi.miniwdl-test/runs/${GIT_REVISION}/output_links
         aws s3 cp s3://czi.miniwdl-test/runs/${GIT_REVISION}/outputs.json -
 
+    - name: worker sentinel files
+      run: |
+        date
+        ssh wdler@${MANAGER_IP} tree -aD /mnt/shared/.swarm
+        ssh wdler@${MANAGER_IP} find /mnt/shared/.swarm/workers -type f | grep -c .
+
     - name: S3 cleanup
       if: always()
       run: aws s3 rm --recursive s3://czi.miniwdl-test/runs/${GIT_REVISION}/

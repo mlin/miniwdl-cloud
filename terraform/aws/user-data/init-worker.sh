@@ -1,4 +1,17 @@
 #!/bin/bash
+# runs on first boot of a worker
+set -euxo pipefail
+
+# join swarm
+rm -f /mnt/shared/.swarm/token
+docker swarm join \
+    --advertise-addr "$(curl http://169.254.169.254/latest/meta-data/local-ipv4)" \
+    --token "$(cat /root/swarm_token)" \
+    "$(cat /mnt/shared/.swarm/manager)"
+
+# enable swarm-heartbeat.sh cron job
+cat << 'EOF' > /root/swarm_heartbeat.sh
+#!/bin/bash
 
 # Custom swarm heartbeat cron job: touch sentinel files on the shared file system, whose timestamps
 # then indicate various conditions of the worker node:
@@ -22,8 +35,8 @@ fi
 if [[ ! -f ${self}/running-containers ]] || [ -n "$(docker ps -q)" ]; then
     touch "${self}/running-containers"
 fi
+EOF
+chmod +x /root/swarm_heartbeat.sh
 
-# TODO: "burst" workers shut themselves down after 30min inactivity
-# if [[ -n $(find "${self}/running_containers" -mmin +30) ]]; then
-#     shutdown -h now "shutdown initiated by swarm_heartbeat.sh"
-# fi
+echo "* * * * * root /root/swarm_heartbeat.sh" > /etc/cron.d/swarm_heartbeat
+service cron reload
