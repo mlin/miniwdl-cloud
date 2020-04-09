@@ -37,5 +37,5 @@ fi
 EOF
 chmod +x /root/swarm_heartbeat.sh
 
-echo "* * * * * /root/swarm_heartbeat.sh" | tee /etc/cron.d/swarm_heartbeat
+echo "* * * * * root /root/swarm_heartbeat.sh" | tee /etc/cron.d/swarm_heartbeat
 service cron reload
