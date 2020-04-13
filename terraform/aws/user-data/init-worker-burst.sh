@@ -9,9 +9,20 @@ cat << 'EOF' > /root/worker_apoptosis.sh
 set -euxo pipefail
 
 self="/mnt/shared/.swarm/workers/$(hostname)"
+rm -f "${self}/shutdown"
 if [[ -n $(find "${self}/running_containers" -mmin +30) ]]; then
     touch "${self}/shutdown" || true
-    shutdown -h now "shutdown initiated by worker_apoptosis.sh"
+    /sbin/shutdown -h now "shutdown initiated by worker_apoptosis.sh"
+fi
+
+if [[ -f /mnt/shared/.swarm/_mock_interruption ]]; then
+    p_interrupt=$(</mnt/shared/.swarm/_mock_interruption)
+    p_interrupt=${p_interrupt:-1}
+    q=$(( RANDOM%100 ))
+    if (( q < p_interrupt )); then
+        touch "${self}/shutdown"
+        /sbin/shutdown -h now "worker_apoptosis.sh mock interruption"
+    fi
 fi
 EOF
 chmod +x /root/worker_apoptosis.sh

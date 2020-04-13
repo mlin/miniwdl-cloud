@@ -28,7 +28,7 @@ task stressor {
     Int samples = 10000000
   }
   command <<<
-    set -euxo pipefail
+    set -euo pipefail
     python3 -c "
     import random
     random.seed()
@@ -72,6 +72,20 @@ task postprocessor {
 }
 EOF
 miniwdl check ~/test_stress.wdl
-time miniwdl run ~/test_stress.wdl \
+
+docker node ls
+tree -aD /mnt/shared/.swarm
+
+# the following sentinel file creates a 5% chance that each burst worker shuts itself down in any
+# given minute (implemented in init-worker-burst.sh)
+sudo bash -c "echo 5 > /mnt/shared/.swarm/_mock_interruption"
+
+exit_code=0
+time timeout 1h miniwdl run ~/test_stress.wdl \
   num_calls=1000 stressor.samples=100000000 \
-  --dir /mnt/shared/runs
+  --dir /mnt/shared/runs --verbose || exit_code=$?
+
+docker node ls
+tree -aD /mnt/shared/.swarm
+
+exit $exit_code

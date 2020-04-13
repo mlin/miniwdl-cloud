@@ -43,7 +43,7 @@ jobs:
       run: terraform init terraform/aws/swarm
 
     - name: terraform apply
-      run: terraform apply $TERRAFORM_ARGS -var=name_tag_prefix=miniwdl-stress-test-${GIT_REVISION} -var=manager_instance_type=t3a.2xlarge -var=persistent_worker_count=1 -var=burst_worker_count=7 terraform/aws/swarm
+      run: terraform apply $TERRAFORM_ARGS -var=name_tag_prefix=miniwdl-stress-test-${GIT_REVISION} -var=manager_instance_type=t3a.2xlarge -var=persistent_worker_count=4 -var=burst_worker_count=4 terraform/aws/swarm
 
     - name: set MANAGER_IP
       run: echo "::set-env name=MANAGER_IP::$(terraform output manager_ip)"
