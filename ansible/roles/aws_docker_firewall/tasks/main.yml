@@ -15,59 +15,26 @@
     destination: 169.254.169.254
     jump: REJECT
     action: insert
-- name: verify EC2 metadata service is blocked from docker containers
-  command: docker run --rm -it alpine:3 wget -qO - http://169.254.169.254
-  register: checkblock1
-  failed_when: checkblock1.rc == 0
-  changed_when: False
 # prevent docker containers from contacting swarm and Lustre ports in our VPC address space
-- name: block VPC Swarm 2376-2377
+- name: block Swarm and Lustre ports in VPC
   iptables:
     chain: DOCKER-USER
-    protocol: tcp
-    destination: 10.0.0.0/8
-    destination_port: 2376:2377
+    protocol: "{{ item.protocol }}"
+    destination: 10.0.0.0/16
+    destination_port: "{{ item.port }}"
     jump: REJECT
     action: insert
-- name: block VPC Swarm 7946
-  iptables:
-    chain: DOCKER-USER
-    protocol: tcp
-    destination: 10.0.0.0/8
-    destination_port: 7946
-    jump: REJECT
-    action: insert
-- name: block VPC Swarm 7946 UDP
-  iptables:
-    chain: DOCKER-USER
-    protocol: udp
-    destination: 10.0.0.0/8
-    destination_port: 7946
-    jump: REJECT
-    action: insert
-- name: block VPC Lustre 988
-  iptables:
-    chain: DOCKER-USER
-    protocol: tcp
-    destination: 10.0.0.0/8
-    destination_port: 988
-    jump: REJECT
-    action: insert
-- name: block VPC Lustre 1021-1023
-  iptables:
-    chain: DOCKER-USER
-    protocol: tcp
-    destination: 10.0.0.0/8
-    destination_port: 1021:1023
-    jump: REJECT
-    action: insert
+  loop:
+    - { protocol: "tcp", port: "2376:2377" }
+    - { protocol: "tcp", port: "7946" }
+    - { protocol: "udp", port: "7946" }
+    - { protocol: "tcp", port: "988" }
+    - { protocol: "tcp", port: "1021:1023" }
 - name: netfilter-persistent save
   command: netfilter-persistent save
   changed_when: False
-- name: reboot
-  reboot:
-- name: verify EC2 metadata service remains blocked from docker containers
+- name: verify EC2 metadata service is blocked from docker containers
   command: docker run --rm -it alpine:3 wget -qO - http://169.254.169.254
-  register: checkblock2
-  failed_when: checkblock2.rc == 0
+  register: checkblock
+  failed_when: checkblock.rc == 0
   changed_when: False

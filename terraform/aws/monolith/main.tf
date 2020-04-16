@@ -17,7 +17,7 @@ module "common" {
 }
 
 resource "aws_spot_instance_request" "monolith" {
-  spot_type              = "one-time"
+  spot_type              = "persistent"
   wait_for_fulfillment   = true
   ami                    = module.common.ubuntu_ami_id
   instance_type          = var.instance_type
@@ -40,8 +40,10 @@ resource "aws_spot_instance_request" "monolith" {
   }
 
   provisioner "remote-exec" {
-    # no-op remote-exec to wait for host to come up before the following local-exec
-    inline = ["date"]
+    # wait for ssh availability
+    inline = [
+      "sudo apt-get -qq update",
+    ]
 
     connection {
       type        = "ssh"
@@ -52,11 +54,57 @@ resource "aws_spot_instance_request" "monolith" {
   }
 
   provisioner "local-exec" {
-    command = "ssh-keyscan ${self.public_ip} >> ~/.ssh/known_hosts"
+    # upload ansible playbooks
+    command = "ssh-keyscan ${self.public_ip} >> ~/.ssh/known_hosts && scp -r ${var.public_key_path} ${path.module}/../../../ansible ubuntu@${self.public_ip}:~/"
+  }
+
+  provisioner "remote-exec" {
+    # run ansible playbook
+    inline = [
+      "sudo add-apt-repository --yes universe",
+      "sudo apt-add-repository --yes --update ppa:ansible/ansible",
+      "sudo apt-get -qq install -y python3-pip ansible",
+      "ansible-playbook --connection=local -i 'localhost,'  --extra-vars 'ansible_python_interpreter=auto public_key_path=~/${basename(var.public_key_path)} lustre_dns_name=${module.common.lustre_dns_name} miniwdl_branch=${var.miniwdl_branch}' ~/ansible/aws_monolith.yml"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file(var.private_key_path)
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "remote-exec" {
+    # reboot
+    inline     = ["sudo reboot"]
+    on_failure = continue
+
+    connection {
+      type        = "ssh"
+      user        = "wdler"
+      private_key = file(var.private_key_path)
+      host        = self.public_ip
+    }
   }
 
   provisioner "local-exec" {
-    command     = "ansible-playbook -u ubuntu -i '${self.public_ip},' --private-key ${var.private_key_path} --extra-vars 'public_key_path=${var.public_key_path} lustre_dns_name=${module.common.lustre_dns_name} miniwdl_branch=${var.miniwdl_branch}' aws_monolith.yml"
-    working_dir = "${path.module}/../../../ansible"
+    command = "sleep 30"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      # test firewall survived reboot
+      "if docker run --rm -it alpine:3 wget -qO - http://169.254.169.254 ; then exit 1; fi",
+      # miniwdl self-test
+      "miniwdl run_self_test --dir /mnt/shared/runs"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = "wdler"
+      private_key = file(var.private_key_path)
+      host        = self.public_ip
+    }
   }
 }

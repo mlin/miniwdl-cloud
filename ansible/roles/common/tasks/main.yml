@@ -1,9 +1,8 @@
 ---
-- name: "apt upgrade"
-  apt: upgrade=full autoremove=yes update_cache=yes
-- name: "common apt packages"
+- name: apt upgrade
+  apt: upgrade=full autoremove=yes
+- name: apt packages
   apt:
-    update_cache: yes
     pkg:
       - vim
       - byobu
@@ -56,7 +55,25 @@
   loop:
     - hard
     - soft
+- name: /home/wdler/.config
+  file:
+    path: /home/wdler/.config
+    state: directory
+    owner: wdler
+    group: wdler
+- name: prepare /mnt/shared/runs
+  file:
+    path: /mnt/shared/runs
+    state: directory
+    owner: wdler
+    group: wdler
 - name: wdler TMPDIR
   lineinfile: dest=/home/wdler/.profile line="export TMPDIR=/mnt/scratch/tmp"
-  remote_user: wdler
-  become: no
+  become_user: wdler
+- name: cd /mnt/shared/runs
+  lineinfile: dest=/home/wdler/.profile line="cd /mnt/shared/runs"
+  become_user: wdler
+- name: byobu-enable
+  command: byobu-enable
+  become_user: wdler
+  changed_when: False
