@@ -1,18 +1,9 @@
 ---
-- name: wait for /mnt/shared/.swarm/token
-  wait_for:
-    path: /mnt/shared/.swarm/token
-    timeout: 900
-- name: read /mnt/shared/.swarm/id_rsa.pub
-  slurp: src=/mnt/shared/.swarm/id_rsa.pub
-  register: id_rsa_pub
 - name: jump ssh key
-  authorized_key: user=wdler key="{{ id_rsa_pub['content'] | b64decode }}"
-- name: read /mnt/shared/.swarm/token
-  slurp: src=/mnt/shared/.swarm/token
-  register: token
-- name: write /root/swarm_token
+  authorized_key: user=wdler key="{{ lookup('file', '/home/wdler/.ssh/id_rsa.pub') }}"
+- name: copy /var/provision/swarm_join_token
   copy:
-    dest: /root/swarm_token
-    content: "{{ token['content'] | b64decode }}"
+    dest: /root/swarm_join_token
+    src: /var/provision/swarm_join_token
+    owner: root
     mode: 0400

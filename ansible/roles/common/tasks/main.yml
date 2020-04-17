@@ -36,8 +36,6 @@
     uid: 1337
     groups: docker
     comment: Wid L. Hacker
-- name: wdler SSH key
-  authorized_key: user=wdler key="{{ lookup('file', public_key_path) }}"
 - name: wlder sudoers
   lineinfile:
     dest: /etc/sudoers.d/50-wdler
@@ -70,10 +68,8 @@
 - name: wdler TMPDIR
   lineinfile: dest=/home/wdler/.profile line="export TMPDIR=/mnt/scratch/tmp"
   become_user: wdler
+  become: yes
 - name: cd /mnt/shared/runs
   lineinfile: dest=/home/wdler/.profile line="cd /mnt/shared/runs"
   become_user: wdler
-- name: byobu-enable
-  command: byobu-enable
-  become_user: wdler
-  changed_when: False
+  become: yes

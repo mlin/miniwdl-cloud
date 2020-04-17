@@ -3,11 +3,19 @@
 set -euxo pipefail
 
 # join swarm
-rm -f /mnt/shared/.swarm/token
-docker swarm join \
-    --advertise-addr "$(curl http://169.254.169.254/latest/meta-data/local-ipv4)" \
-    --token "$(cat /root/swarm_token)" \
-    "$(cat /mnt/shared/.swarm/manager)"
+for tries in $(seq 30); do
+    docker swarm join \
+        --advertise-addr "$(curl http://169.254.169.254/latest/meta-data/local-ipv4)" \
+        --token "$(cat /root/swarm_join_token)" "10.0.1.1:2377" && join_status=$? || join_status=$?
+    if (( join_status == 0 )); then
+        break
+    fi
+    sleep 10
+done
+if (( join_status != 0 )); then
+    exit $join_status
+fi
+rm /root/swarm_join_token
 
 # enable swarm-heartbeat.sh cron job
 cat << 'EOF' > /root/swarm_heartbeat.sh

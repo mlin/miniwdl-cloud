@@ -11,3 +11,11 @@
   become: yes
   roles:
     - aws_docker_firewall
+  tasks:
+    - name: wdler SSH key
+      authorized_key: user=wdler key="{{ lookup('file', public_key_path) }}"
+    - name: byobu-enable
+      command: byobu-enable
+      become_user: wdler
+      become: yes
+      changed_when: False
