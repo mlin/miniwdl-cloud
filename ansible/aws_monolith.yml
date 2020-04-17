@@ -12,33 +12,10 @@
   roles:
     - aws_docker_firewall
   tasks:
-    - name: /home/wdler/.config
-      file:
-        path: /home/wdler/.config
-        state: directory
-        owner: wdler
-        group: wdler
-    - name: prepare /mnt/shared/runs
-      file:
-        path: /mnt/shared/runs
-        state: directory
-        owner: wdler
-        group: wdler
-    - name: cd /mnt/shared/runs
-      lineinfile: dest=/home/wdler/.profile line="cd /mnt/shared/runs"
-      remote_user: wdler
-      become: no
-    - name: test miniwdl
-      command:
-        argv:
-          - /bin/bash
-          - -lc
-          - miniwdl run_self_test --dir /mnt/shared/runs
-      remote_user: wdler
-      become: no
-      changed_when: False
+    - name: wdler SSH key
+      authorized_key: user=wdler key="{{ lookup('file', public_key_path) }}"
     - name: byobu-enable
       command: byobu-enable
-      remote_user: wdler
-      become: no
+      become_user: wdler
+      become: yes
       changed_when: False

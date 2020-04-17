@@ -1,9 +1,8 @@
 ---
-- name: "apt upgrade"
-  apt: upgrade=full autoremove=yes update_cache=yes
-- name: "common apt packages"
+- name: apt upgrade
+  apt: upgrade=full autoremove=yes
+- name: apt packages
   apt:
-    update_cache: yes
     pkg:
       - vim
       - byobu
@@ -37,8 +36,6 @@
     uid: 1337
     groups: docker
     comment: Wid L. Hacker
-- name: wdler SSH key
-  authorized_key: user=wdler key="{{ lookup('file', public_key_path) }}"
 - name: wlder sudoers
   lineinfile:
     dest: /etc/sudoers.d/50-wdler
@@ -56,7 +53,23 @@
   loop:
     - hard
     - soft
+- name: /home/wdler/.config
+  file:
+    path: /home/wdler/.config
+    state: directory
+    owner: wdler
+    group: wdler
+- name: prepare /mnt/shared/runs
+  file:
+    path: /mnt/shared/runs
+    state: directory
+    owner: wdler
+    group: wdler
 - name: wdler TMPDIR
   lineinfile: dest=/home/wdler/.profile line="export TMPDIR=/mnt/scratch/tmp"
-  remote_user: wdler
-  become: no
+  become_user: wdler
+  become: yes
+- name: cd /mnt/shared/runs
+  lineinfile: dest=/home/wdler/.profile line="cd /mnt/shared/runs"
+  become_user: wdler
+  become: yes

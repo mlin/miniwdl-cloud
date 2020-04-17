@@ -34,7 +34,7 @@ variable "s3bucket" {
 }
 variable "inputs_prefix" {
   description = "S3 key prefix under which inputs may be read (with trailing slash, without leading slash)"
-  default = ""
+  default     = ""
 }
 variable "outputs_prefix" {
   description = "S3 key prefix under which outputs may be written (with trailing slash, without leading slash)"
