@@ -76,9 +76,9 @@ miniwdl check ~/test_stress.wdl
 docker node ls
 tree -aD /mnt/shared/.swarm
 
-# the following sentinel file creates a 5% chance that each burst worker shuts itself down in any
-# given minute (implemented in init-worker-burst.sh)
-sudo bash -c "echo 5 > /mnt/shared/.swarm/_mock_interruption"
+# the following sentinel file causes a 5% chance that each burst worker shuts itself down in any
+# given minute (implemented in worker_heartbeat.sh)
+sudo bash -c "echo 5 > /mnt/shared/.swarm/workers/_induce_shutdown"
 
 exit_code=0
 time timeout 1h miniwdl run ~/test_stress.wdl \

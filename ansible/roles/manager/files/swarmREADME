@@ -1,7 +1,7 @@
-miniwdl swarm nodes use this shared directory as a custom coordination bus.
-* /mnt/shared/.swarm/manager has the internal address of the swarm manager endpoint
-* /mnt/shared/.swarm/workers/{worker_hostname} for each worker machine, containing files:
-  - alive: touched (mtime updated) every minute while the worker is alive
-  - in-swarm: touched every minute while the worker is properly attached to the swarm
+miniwdl swarm nodes use this shared directory as a custom monitoring & signaling bus.
+/mnt/shared/.swarm/workers/{hostname} for each worker node, contains files:
+  - boot: touched (mtime updated) when the worker boots up
+  - alive: touched every minute while the worker is up
+  - in-swarm: touched every minute while the worker is attached to the swarm
   - running-containers: touched every minute while the worker has >=1 running Docker containers
-  The state of the worker fleet can thus be inferred from these files' mtimes.
+The state of the worker fleet can thus be inferred from these files' mtimes.

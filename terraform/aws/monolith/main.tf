@@ -1,3 +1,6 @@
+# launch one spot instance which serves both manager & worker roles for miniwdl swarm, with
+# attached FSx for Lustre file system that also handles I/O with an associated S3 bucket.
+
 provider "aws" {
   region = var.region
 }
@@ -24,7 +27,6 @@ resource "aws_spot_instance_request" "monolith" {
   subnet_id              = module.common.subnet_id
   vpc_security_group_ids = [module.common.sg_mosh_id, module.common.sg_lustre_id]
   key_name               = module.common.ec2_key_name
-  user_data_base64       = filebase64("${path.module}/../user-data/init.sh")
 
   root_block_device {
     volume_size = 40

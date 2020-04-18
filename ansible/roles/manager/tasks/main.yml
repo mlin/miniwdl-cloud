@@ -1,7 +1,8 @@
 ---
-- name: wdler SSH key
+# set up miniwdl swarm manager node
+- name: SSH key for remote login to wdler account
   authorized_key: user=wdler key="{{ lookup('file', public_key_path) }}"
-- name: generate jump ssh key
+- name: generate manager-worker jump SSH key
   openssh_keypair:
     path: /home/wdler/.ssh/id_rsa
     owner: wdler
@@ -17,12 +18,26 @@
   docker_node_info:
     self: true
   register: self_node
-- name: prevent manager from accepting tasks
+- name: prevent manager node from accepting tasks
   docker_node:
     hostname: '{{ self_node.nodes[0]["ID"] }}'
     availability: drain
+- name: docker reboot nudge
+  # docker, for whatever reason, seems to need a small nudge to make the swarm manager come back up
+  # after a reboot; schedule a cron job to do so
+  cron:
+    name: docker_reboot_nudge
+    special_time: reboot
+    job: sleep 60; docker info; sleep 60; docker node inspect self
 
-# deposit info in /mnt/shared/.swarm for workers
+
+# prepare stuff for workers
+- name: /var/provision/swarm_worker_token
+  copy:
+    dest: /var/provision/swarm_worker_token
+    content: '{{ swarm_init.swarm_facts["JoinTokens"]["Worker"] }}'
+    owner: wdler
+    mode: 0400
 - name: /mnt/shared/.swarm
   file:
     path: /mnt/shared/.swarm/workers
@@ -32,14 +47,8 @@
     src: swarmREADME
     dest: /mnt/shared/.swarm/README
     mode: 0664
-- name: /var/provision/swarm_join_token
-  copy:
-    dest: /var/provision/swarm_join_token
-    content: '{{ swarm_init.swarm_facts["JoinTokens"]["Worker"] }}'
-    owner: wdler
-    mode: 0400
 
-# miniwdl/shell configuration
+# miniwdl configuration
 - name: /home/wdler/.config
   file:
     path: /home/wdler/.config
@@ -53,6 +62,8 @@
     owner: wdler
     group: wdler
     mode: 0640
+
+# shell configuration
 - name: motd
   copy:
     src: motd

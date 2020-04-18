@@ -1,4 +1,6 @@
 ---
+# prepare a "template" instance to be snapshotted as the swarm worker AMI (runs from the manager
+# node)
 - hosts: all
   become: yes
   roles:
@@ -10,7 +12,7 @@
 - hosts: all
   become: yes
   roles:
-    - aws_docker_firewall
+    - aws_docker_config
 - hosts: all
   become: yes
   roles:

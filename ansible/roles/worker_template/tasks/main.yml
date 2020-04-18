@@ -1,9 +1,22 @@
 ---
-- name: jump ssh key
+# swarm worker AMI
+- name: manager-worker jump SSH key
   authorized_key: user=wdler key="{{ lookup('file', '/home/wdler/.ssh/id_rsa.pub') }}"
-- name: copy /var/provision/swarm_join_token
+- name: worker scripts
   copy:
-    dest: /root/swarm_join_token
-    src: /var/provision/swarm_join_token
+    dest: /root/{{ item }}
+    src: '{{ item }}'
+    mode: 0700
+  loop:
+    - swarm_worker_join.sh
+    - swarm_worker_heartbeat.sh
+- name: swarm_worker_token
+  copy:
+    dest: /root/swarm_worker_token
+    src: /var/provision/swarm_worker_token  # created by manager role
     owner: root
     mode: 0400
+- name: swarm_worker_heartbeat cron job
+  cron:
+    name: swarm_worker_heartbeat
+    job: /root/swarm_worker_heartbeat.sh

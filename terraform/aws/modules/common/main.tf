@@ -1,3 +1,5 @@
+# common infra shared by other AWS modules: VPC resources, FSx for Lustre, EC2 key pair
+
 resource "aws_vpc" "vpc" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true

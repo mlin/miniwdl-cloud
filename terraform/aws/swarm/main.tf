@@ -1,3 +1,8 @@
+# miniwdl swarm with one (small, on-demand) manager node and several (powerful, spot) worker nodes.
+# Operator SSH into the manager node and use `miniwdl run` to schedule WDL tasks on the workers via
+# Docker Swarm. A shared FSx for Lustre file system provides the I/O bus for workflows, including
+# reading inputs from & writing outputs to an associated S3 bucket.
+
 provider "aws" {
   region = var.region
 }
@@ -19,6 +24,7 @@ module "common" {
   lustre_weekly_maintenance_start_time = var.lustre_weekly_maintenance_start_time
 }
 
+# security groups for internal swarm coordination
 resource "aws_security_group" "sg_swarm_manager" {
   name   = "${var.name_tag_prefix}_sg_swarm_manager"
   vpc_id = module.common.vpc_id
@@ -80,7 +86,6 @@ resource "aws_instance" "manager" {
   subnet_id              = module.common.subnet_id
   vpc_security_group_ids = [module.common.sg_mosh_id, module.common.sg_lustre_id, aws_security_group.sg_swarm_manager.id, aws_security_group.sg_swarm.id]
   key_name               = module.common.ec2_key_name
-  user_data_base64       = filebase64("${path.module}/../user-data/init.sh")
 
   root_block_device {
     volume_size = 40
@@ -153,6 +158,7 @@ data "local_file" "jump_ssh_public_key" {
   filename = "${path.cwd}/jump.id_rsa.pub.${aws_instance.manager.id}"
 }
 
+# worker tempate instance: will be provisioned & then snapshotted to create worker AMI
 resource "aws_instance" "worker_template" {
   ami                    = module.common.ubuntu_ami_id
   instance_type          = var.manager_instance_type
@@ -219,48 +225,26 @@ resource "aws_ami_from_instance" "worker_ami" {
   }
 }
 
-data "template_cloudinit_config" "persistent_worker_data" {
-  part {
-    content_type = "text/x-shellscript"
-    content      = file("${path.module}/../user-data/init.sh")
-  }
-
-  part {
-    content_type = "text/x-shellscript"
-    content      = file("${path.module}/../user-data/init-worker.sh")
-  }
-}
+# worker instances launched using worker AMI
 
 resource "aws_spot_instance_request" "persistent_worker" {
-  count                  = var.persistent_worker_count
+  count                  = var.worker_count
   spot_type              = "persistent"
   ami                    = aws_ami_from_instance.worker_ami.id
   instance_type          = var.worker_instance_type
   subnet_id              = module.common.subnet_id
   vpc_security_group_ids = [module.common.sg_lustre_id, aws_security_group.sg_swarm.id]
   key_name               = module.common.ec2_key_name
-  user_data_base64       = data.template_cloudinit_config.persistent_worker_data.rendered
+  user_data              = <<-EOF
+  #!/bin/bash
+  /root/scratch-docker.sh
+  touch /var/local/swarm_worker  # signals swarm_heartbeat cron job
+  /root/swarm_worker_join.sh
+  EOF
 
   tags = {
     Name  = "${var.name_tag_prefix}_persistent_worker"
     owner = var.owner_tag
-  }
-}
-
-data "template_cloudinit_config" "burst_worker_data" {
-  part {
-    content_type = "text/x-shellscript"
-    content      = file("${path.module}/../user-data/init.sh")
-  }
-
-  part {
-    content_type = "text/x-shellscript"
-    content      = file("${path.module}/../user-data/init-worker.sh")
-  }
-
-  part {
-    content_type = "text/x-shellscript"
-    content      = file("${path.module}/../user-data/init-worker-burst.sh")
   }
 }
 
@@ -272,7 +256,12 @@ resource "aws_spot_instance_request" "burst_worker" {
   subnet_id              = module.common.subnet_id
   vpc_security_group_ids = [module.common.sg_lustre_id, aws_security_group.sg_swarm.id]
   key_name               = module.common.ec2_key_name
-  user_data_base64       = data.template_cloudinit_config.burst_worker_data.rendered
+  user_data              = <<-EOF
+  #!/bin/bash
+  /root/scratch-docker.sh
+  touch /var/local/swarm_worker /var/local/swarm_worker_burst  # signals swarm_heartbeat cron job
+  /root/swarm_worker_join.sh
+  EOF
 
   tags = {
     Name  = "${var.name_tag_prefix}_burst_worker"

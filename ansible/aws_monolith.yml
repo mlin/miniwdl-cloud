@@ -1,4 +1,5 @@
 ---
+# prepare a single AWS instance to serve both manager & worker roles for miniwdl swarm
 - hosts: all
   become: yes
   roles:
@@ -10,9 +11,13 @@
 - hosts: all
   become: yes
   roles:
-    - aws_docker_firewall
+    - aws_docker_config
   tasks:
-    - name: wdler SSH key
+    - name: scratch-docker.sh
+      shell:
+        cmd: /root/scratch-docker.sh && touch /mnt/scratch/.ok
+        creates: /mnt/scratch/.ok
+    - name: wdler SSH key for remote access
       authorized_key: user=wdler key="{{ lookup('file', public_key_path) }}"
     - name: byobu-enable
       command: byobu-enable

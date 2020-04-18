@@ -1,4 +1,10 @@
 ---
+# shared config, packages, and wdler user (uid 1337) used by all playbooks
+- name: sshd keepalive
+  lineinfile: dest=/etc/ssh/sshd_config line="{{ item }}"
+  loop:
+    - ClientAliveInterval 60
+    - ClientAliveCountMax 5
 - name: apt upgrade
   apt: upgrade=full autoremove=yes
 - name: apt packages
@@ -24,11 +30,6 @@
       - gsutil
       - azure-cli
       - docker
-- name: sshd keepalive
-  lineinfile: dest=/etc/ssh/sshd_config line="{{ item }}"
-  loop:
-    - ClientAliveInterval 60
-    - ClientAliveCountMax 5
 - name: user wdler
   user:
     name: wdler

@@ -1,4 +1,5 @@
 ---
+# Install AWS FSx for Lustre client software, and mount {{ lustre_dna_name }} to /mnt/shared
 - name: "pin AMI's kernel version"
   # Pin kernel version to the one baked into AMI, because AWS publish Lustre client debs for
   # certain kernel versions only. (Make sure this applies before any general apt upgrade)
@@ -31,6 +32,7 @@
     executable: /bin/bash
     creates: /mnt/shared/.fsx
 - name: fsx_to_s3
+  # install helper script for writing files back to S3
   copy:
     src: fsx_to_s3
     dest: /usr/local/bin/fsx_to_s3
