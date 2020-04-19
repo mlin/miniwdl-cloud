@@ -2,25 +2,51 @@
 
 set -eu
 
-if [[ $# -ne 1 ]] || [[ $1 == "-h" ]] || [[ $1 == "-help" ]] || [[ $1 == "--help" ]]; then
-    echo "Usage: fsx_to_s3 FILE_OR_DIR"
-    echo "Write a file or directory under /mnt/shared back to the pre-configured S3 bucket, synchronously"
+s3_export_path=$(</mnt/shared/.s3_export_path)
+if [[ -z $s3_export_path ]]; then
+    >&2 echo "expected /mnt/shared/.s3_export_path to have been provisioned"
+    exit 1
+fi
+
+if [[ $# -lt 1 ]] || [[ $1 == "-h" ]] || [[ $1 == "-help" ]] || [[ $1 == "--help" ]]; then
+    echo "Usage: fsx_to_s3 PATH [PATH ...]"
+    echo "Write files & directories under /mnt/shared back to linked S3 bucket."
+    echo "For example /mnt/shared/foo/bar.txt will be uploaded to ${s3_export_path}foo/bar.txt"
+    echo "Warning: symbolic links will be resolved to canonical paths for upload."
     exit 2
 fi
 
-
-# initiate archive job(s)
-if [[ -L $1 ]]; then
-    >&2 echo "cannot operate on symlink: $1"
-    exit 1
-elif [[ -f $1 || -d $1 ]]; then
-    find "$1" -type f -print0 | xargs -0 -n 1 -P 16 sudo lfs hsm_archive
-else
-    >&2 echo "file/directory not found: $1"
+# collect manifest of files to archive
+manifest="$(mktemp /tmp/fsx_to_s3.XXXXXX)"
+for item in "$@"; do
+    if [[ -f $item || -d $item ]]; then
+        find -L "$item" -type f -exec readlink -e {} \; >> "$manifest"
+    else
+        >&2 echo "file/directory not found: $item"
+        exit 1
+    fi
+done
+if grep -qv ^/mnt/shared/ "$manifest"; then
+    >&2 echo "only paths under /mnt/shared/ are acceptable unlike:"
+    >&2 grep -v ^/mnt/shared/ "$manifest"
     exit 1
 fi
 
-# wait for job(s) to complete
-while [[ $(find "$1" -type f -print0 | xargs -0 -n 1 -P 16 sudo lfs hsm_action | grep -c ARCHIVE) -gt 0 ]]; do
+# initiate archive jobs & wait for them to complete
+sort "$manifest" | uniq | xargs -n 1 -P 16 sudo lfs hsm_archive
+while [[ $(xargs -n 1 -P 16 sudo lfs hsm_action < "$manifest" | grep -c ARCHIVE) -gt 0 ]]; do
     sleep 2
 done
+
+# verify & report. TODO: consider parallelizing this
+exit_code=0
+while read -r item; do
+    if grep -q archived <(sudo lfs hsm_state "$item"); then
+        item_rel=${item#/mnt/shared/}
+        printf "%s\t%s%s\n" "$item" "$s3_export_path" "$item_rel"
+    else
+        >&2 printf "%s\tFAILED\n" "$item"
+        exit_code=1
+    fi
+done < <(sort "$manifest" | uniq)
+exit $exit_code

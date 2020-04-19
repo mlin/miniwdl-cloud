@@ -31,6 +31,13 @@
       touch /mnt/shared/.fsx
     executable: /bin/bash
     creates: /mnt/shared/.fsx
+- name: /mnt/shared/.s3_export_path
+  copy:
+    content: "{{ s3_export_path }}"
+    dest: /mnt/shared/.s3_export_path
+    owner: root
+    group: root
+    mode: 0644
 - name: fsx_to_s3
   # install helper script for writing files back to S3
   copy:

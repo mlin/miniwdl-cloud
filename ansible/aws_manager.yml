@@ -16,3 +16,8 @@
   become: yes
   roles:
     - manager
+  tasks:
+    - name: scratch-docker.sh
+      shell:
+        cmd: /root/scratch-docker.sh && touch /mnt/scratch/.ok
+        creates: /mnt/scratch/.ok
