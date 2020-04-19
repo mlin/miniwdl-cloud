@@ -10,9 +10,6 @@ variable "availability_zone" {
 variable "public_key_path" {
   description = "SSH public key path"
 }
-variable "private_key_path" {
-  description = "SSH private key path"
-}
 variable "lustre_GiB" {
   description = "FSx for Lustre shared scratch capacity in GiB (multiple of 1200)"
 }

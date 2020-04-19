@@ -48,7 +48,7 @@ jobs:
       run: terraform init terraform/aws/swarm
 
     - name: terraform apply
-      run: terraform apply $TERRAFORM_ARGS -var=name_tag_prefix=miniwdl-test-${GIT_REVISION} terraform/aws/swarm
+      run: eval `ssh-agent` && ssh-add && terraform apply $TERRAFORM_ARGS -var=name_tag_prefix=miniwdl-test-${GIT_REVISION} terraform/aws/swarm
 
     - name: set MANAGER_IP
       run: echo "::set-env name=MANAGER_IP::$(terraform output manager_ip)"

@@ -16,7 +16,6 @@ module "common" {
   owner_tag                            = var.owner_tag
   availability_zone                    = var.availability_zone
   public_key_path                      = var.public_key_path
-  private_key_path                     = var.private_key_path
   lustre_GiB                           = var.lustre_GiB
   s3bucket                             = var.s3bucket
   inputs_prefix                        = var.inputs_prefix
@@ -104,10 +103,9 @@ resource "aws_instance" "manager" {
     ]
 
     connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file(var.private_key_path)
-      host        = self.public_ip
+      type = "ssh"
+      user = "ubuntu"
+      host = self.public_ip
     }
   }
 
@@ -127,10 +125,9 @@ resource "aws_instance" "manager" {
     ]
 
     connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file(var.private_key_path)
-      host        = self.public_ip
+      type = "ssh"
+      user = "ubuntu"
+      host = self.public_ip
     }
   }
 
@@ -146,10 +143,9 @@ resource "aws_instance" "manager" {
     on_failure = continue
 
     connection {
-      type        = "ssh"
-      user        = "wdler"
-      private_key = file(var.private_key_path)
-      host        = self.public_ip
+      type = "ssh"
+      user = "wdler"
+      host = self.public_ip
     }
   }
 }
@@ -188,10 +184,9 @@ resource "aws_instance" "worker_template" {
     inline = ["while ! ssh -o StrictHostKeyChecking=no ubuntu@${self.private_ip} whoami ; do sleep 3; done"]
 
     connection {
-      type        = "ssh"
-      user        = "wdler"
-      private_key = file(var.private_key_path)
-      host        = aws_instance.manager.public_ip
+      type = "ssh"
+      user = "wdler"
+      host = aws_instance.manager.public_ip
     }
   }
 
@@ -202,10 +197,9 @@ resource "aws_instance" "worker_template" {
     ]
 
     connection {
-      type        = "ssh"
-      user        = "wdler"
-      private_key = file(var.private_key_path)
-      host        = aws_instance.manager.public_ip
+      type = "ssh"
+      user = "wdler"
+      host = aws_instance.manager.public_ip
     }
   }
 

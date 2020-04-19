@@ -14,12 +14,8 @@ variable "availability_zone" {
   default     = "us-west-2c"
 }
 variable "public_key_path" {
-  description = "SSH public key path"
+  description = "Path to public key for SSH from this PC to cloud instance; corresponding private key must be usable noninteractively e.g. through ssh-agent"
   default     = "~/.ssh/id_rsa.pub"
-}
-variable "private_key_path" {
-  description = "SSH private key path"
-  default     = "~/.ssh/id_rsa"
 }
 variable "lustre_GiB" {
   description = "FSx for Lustre shared scratch capacity in GiB (multiple of 1200)"
@@ -33,11 +29,11 @@ variable "s3bucket" {
   description = "Name of S3 bucket (in the desired region) to be linked to the Lustre scratch space"
 }
 variable "inputs_prefix" {
-  description = "S3 key prefix under which inputs may be read (with trailing slash, without leading slash)"
+  description = "List existing S3 objects in the Lustre file system only if they have this key prefix (default: expose all existing objects in bucket)"
   default     = ""
 }
 variable "outputs_prefix" {
-  description = "S3 key prefix under which outputs may be written (with trailing slash, without leading slash)"
+  description = "Apply this key prefix to Lustre file paths written back to S3 (default: files may be written anywhere in bucket)"
   default     = ""
 }
 variable "instance_type" {

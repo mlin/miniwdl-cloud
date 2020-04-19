@@ -14,12 +14,8 @@ variable "availability_zone" {
   default     = "us-west-2c"
 }
 variable "public_key_path" {
-  description = "Path to SSH public key for remote access to manager node"
+  description = "Path to public key for SSH from this PC to manager instance; corresponding private key must be usable noninteractively e.g. through ssh-agent"
   default     = "~/.ssh/id_rsa.pub"
-}
-variable "private_key_path" {
-  description = "Path to SSH private key for remote access to manager node (used locally only)"
-  default     = "~/.ssh/id_rsa"
 }
 variable "lustre_GiB" {
   description = "FSx for Lustre shared scratch capacity in GiB (multiple of 1200)"

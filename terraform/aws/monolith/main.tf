@@ -11,7 +11,6 @@ module "common" {
   owner_tag                            = var.owner_tag
   availability_zone                    = var.availability_zone
   public_key_path                      = var.public_key_path
-  private_key_path                     = var.private_key_path
   lustre_GiB                           = var.lustre_GiB
   s3bucket                             = var.s3bucket
   inputs_prefix                        = var.inputs_prefix
@@ -48,10 +47,9 @@ resource "aws_spot_instance_request" "monolith" {
     ]
 
     connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file(var.private_key_path)
-      host        = self.public_ip
+      type = "ssh"
+      user = "ubuntu"
+      host = self.public_ip
     }
   }
 
@@ -70,10 +68,9 @@ resource "aws_spot_instance_request" "monolith" {
     ]
 
     connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file(var.private_key_path)
-      host        = self.public_ip
+      type = "ssh"
+      user = "ubuntu"
+      host = self.public_ip
     }
   }
 
@@ -83,10 +80,9 @@ resource "aws_spot_instance_request" "monolith" {
     on_failure = continue
 
     connection {
-      type        = "ssh"
-      user        = "wdler"
-      private_key = file(var.private_key_path)
-      host        = self.public_ip
+      type = "ssh"
+      user = "wdler"
+      host = self.public_ip
     }
   }
 
@@ -103,10 +99,9 @@ resource "aws_spot_instance_request" "monolith" {
     ]
 
     connection {
-      type        = "ssh"
-      user        = "wdler"
-      private_key = file(var.private_key_path)
-      host        = self.public_ip
+      type = "ssh"
+      user = "wdler"
+      host = self.public_ip
     }
   }
 }
