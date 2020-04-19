@@ -39,3 +39,11 @@
     owner: root
     group: root
     mode: 0775
+- name: /mnt/shared/.s3_export_path
+  # fsx_to_s3 uses this to figure out the uploaded S3 paths
+  copy:
+    content: "{{ s3_export_path }}"
+    dest: /mnt/shared/.s3_export_path
+    owner: root
+    group: root
+    mode: 0644

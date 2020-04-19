@@ -123,7 +123,7 @@ resource "aws_instance" "manager" {
       "sudo add-apt-repository --yes universe",
       "sudo apt-add-repository --yes --update ppa:ansible/ansible",
       "sudo apt-get -qq install -y python3-pip ansible",
-      "ansible-playbook --connection=local -i 'localhost,'  --extra-vars 'ansible_python_interpreter=auto public_key_path=/var/provision/${basename(var.public_key_path)} lustre_dns_name=${module.common.lustre_dns_name} miniwdl_branch=${var.miniwdl_branch}' /var/provision/ansible/aws_manager.yml"
+      "ansible-playbook --connection=local -i 'localhost,'  --extra-vars 'ansible_python_interpreter=auto public_key_path=/var/provision/${basename(var.public_key_path)} lustre_dns_name=${module.common.lustre_dns_name} s3_export_path=s3://${var.s3bucket}/${var.outputs_prefix} miniwdl_branch=${var.miniwdl_branch}' /var/provision/ansible/aws_manager.yml"
     ]
 
     connection {
@@ -198,7 +198,7 @@ resource "aws_instance" "worker_template" {
   # run ansible playbooks via jump ssh
   provisioner "remote-exec" {
     inline = [
-      "ansible-playbook -u ubuntu -i '${self.private_ip},' --extra-vars 'ansible_python_interpreter=auto lustre_dns_name=${module.common.lustre_dns_name}' /var/provision/ansible/aws_worker_template.yml"
+      "ansible-playbook -u ubuntu -i '${self.private_ip},' --extra-vars 'ansible_python_interpreter=auto lustre_dns_name=${module.common.lustre_dns_name} s3_export_path=s3://${var.s3bucket}/${var.outputs_prefix}' /var/provision/ansible/aws_worker_template.yml"
     ]
 
     connection {

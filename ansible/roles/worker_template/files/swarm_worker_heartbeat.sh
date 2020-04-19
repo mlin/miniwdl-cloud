@@ -19,9 +19,10 @@ self="/mnt/shared/.swarm/workers/$(hostname)"
 mkdir -p "$self"
 rm -f "${self}/shutdown"
 if [[ ! -f /var/local/swarm_worker_boot ]]; then
-    touch "${self}/boot" /var/local/swarm_worker_boot
+    cat /proc/cpuinfo > "${self}/boot"
+    touch /var/local/swarm_worker_boot
 fi
-touch "${self}" "${self}/alive"
+(uptime; free -h; df -h) > "${self}/alive"
 
 
 
@@ -56,7 +57,7 @@ if [[ -f /mnt/shared/.swarm/workers/_induce_shutdown ]]; then
     p_shutdown=${p_shutdown:-1}
     q=$(( RANDOM%100 ))
     if (( q < p_shutdown )); then
-        (echo induced $q $p_shutdown > "${self}/shutdown") || true
+        (echo induced $q "$p_shutdown" > "${self}/shutdown") || true
         /sbin/shutdown -h now "induced"
     fi
 fi
