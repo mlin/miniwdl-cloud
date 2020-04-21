@@ -26,39 +26,27 @@ AWS is targeted initially, but we've relied on core infrastructure services that
 Prerequisites:
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html), configured with [credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) and ([role](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html) if applicable) so that commands work on the desired account without any explicit auth arguments.
+* S3 bucket for input & output files, in your preferred AWS region
 * [terraform](https://www.terraform.io/downloads.html)
 * SSH key pair (a default one in `~/.ssh/id_rsa[.pub]` is fine)
 * [mosh](https://mosh.org/#getting) (recommended to improve SSH experience)
 
-### Configure session
+### Prepare terminal session
 
-In the desired terminal session, start an [SSH agent](https://www.ssh.com/ssh/agent) and add your key to it.
-
-```
-eval `ssh-agent`
-ssh-add
-```
-
-If your private key isn't the default `~/.ssh/id_rsa`, then supply its path to `ssh-add`. If your private key file is password-protected, you will unlock it at this time. The Terraform deployment procedure will upload the public key to EC2, then use the SSH agent to connect to the launched servers for provisioning.
-
-Next, set environment variables for a few Terraform variables that won't be changing frequently:
+Clone this repo or your preferred version/fork thereof:
 
 ```
-# desired AWS region
-export TF_VAR_region=us-west-2
-
-# S3 bucket for input & output files (must be in the same region)
-export TF_VAR_s3bucket=your-bucket-name
-
-# prefixed to the Name tag of each AWS resource:
-export TF_VAR_name_tax_prefix=my_miniwdl_cloud
-
-# sets the 'owner' tag of all AWS resources
-export TF_VAR_owner_tag=your@email.com
-
-# if other than ~/.ssh/id_rsa.pub
-# export TF_VAR_public_key_path=/path/to/ssh_key.pub
+git clone https://github.com/mlin/miniwdl-cloud.git
+cd miniwdl-cloud
 ```
+
+Open the [`environment`](https://github.com/mlin/miniwdl-cloud/blob/master/environment) file in your editor and customize it as needed, in particular setting the AWS region/AZ and S3 bucket name. Then,
+
+```
+source environment
+```
+
+and verify the displayed information.
 
 ### Deploy infrastructure
 
@@ -69,14 +57,14 @@ terraform init terraform/aws/swarm
 terraform apply terraform/aws/swarm
 ```
 
-This takes about 20 minutes, during which it:
+This takes about 20 minutes to:
 
-1. Creates VPC & firewall rules
-2. Creates shared file system
-3. Launches manager instance & provisions it with miniwdl and Docker Swarm
-4. Launches worker template instance and poises it to join the swarm on boot
-5. Creates AMI from worker template instance
-6. Issues worker spot instance requests using AMI
+1. Create VPC & firewall rules
+2. Provision shared file system
+3. Launch manager instance & install miniwdl and Docker Swarm
+4. Launch worker template instance and configure it to join the swarm on boot
+5. Snapshot VM image from worker template instance
+6. Issue spot instance requests using worker VM image
 
 ### Connect to manager node
 
@@ -90,8 +78,10 @@ mosh wdler@$(terraform output manager_ip)
 
 Try a test workflow:
 ```
-miniwdl run_self_test --dir /mnt/shared/test
+miniwdl run_self_test --dir /mnt/shared/runs
 ```
+
+The task containers run on the worker spot instances, orchestrated by miniwdl & Docker Swarm from the small manager node you're logged into, all mounting `/mnt/shared` through which input/output files and logs are exchanged.
 
 ## S3 I/O
 
@@ -99,6 +89,6 @@ miniwdl run_self_test --dir /mnt/shared/test
 
 ## Monitoring
 
-## Limitations
-
 ## Security
+
+## Limitations

@@ -1,0 +1,31 @@
+# Prepare terminal environment for miniwdl-cloud deployment. Customize as needed, then
+#     source environment
+# in your terminal before proceeding to Terraform steps.
+
+
+# Start SSH agent and add your SSH key. If your private key file is password-protected, then you'll
+# unlock it for the session at this step.
+eval `ssh-agent`
+ssh-add "$HOME/.ssh/id_rsa"
+
+# Corresponding SSH public key file; will be loaded onto launched EC2 instances
+export TF_VAR_public_key_path="$HOME/.ssh/id_rsa.pub"
+
+# AWS region & availability zone therein
+export TF_VAR_region=us-west-2
+export TF_VAR_availability_zone=us-west-2b
+
+# S3 bucket for input & output files (must be in the same region)
+export TF_VAR_s3bucket=your-bucket-name
+
+# Prefixed to the Name tag of each AWS resource
+export TF_VAR_name_tag_prefix=my_miniwdl_cloud
+
+# Sets the 'owner' tag of each AWS resource
+export TF_VAR_owner_tag=your@email.com
+
+
+# Display information for verification
+aws sts get-caller-identity
+terraform --version
+env | sort | grep --color=never ^TF_
