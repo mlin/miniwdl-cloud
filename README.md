@@ -6,7 +6,7 @@ AWS is targeted initially, but we've relied on core infrastructure services that
 
 ## Overview of moving parts (AWS)
 
-*diagram goes here*
+![architecture diagram](arch.png)
 
 **Compute:**
 * Manager instance (small, on-demand) hosts user SSH session, miniwdl, and Docker Swarm manager
