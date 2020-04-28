@@ -26,7 +26,7 @@ AWS is targeted initially, but we've relied on core infrastructure services that
 Prerequisites:
 
 * [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html), configured with [credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) and ([role](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html) if applicable) so that commands work on the desired account without any explicit auth arguments.
-* S3 bucket for input & output files, in your preferred AWS region
+* S3 bucket for input & output files, in your preferred AWS region. Suggestion: create a new bucket with some test input files & use it to try out the S3 I/O functionality here, before linking to a bucket of record.
 * [terraform](https://www.terraform.io/downloads.html)
 * SSH key pair (a default one in `~/.ssh/id_rsa[.pub]` is fine)
 * [mosh](https://mosh.org/#getting) (recommended to improve SSH experience)
