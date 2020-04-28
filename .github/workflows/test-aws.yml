@@ -70,10 +70,8 @@ jobs:
 
     - name: S3 writeback
       run: |
-        ssh wdler@${MANAGER_IP} fsx_to_s3 -h || true
-        ssh wdler@${MANAGER_IP} fsx_to_s3 /mnt/shared/runs/${GIT_REVISION}/
-        aws s3 ls --recursive s3://czi.miniwdl-test/runs/${GIT_REVISION}/output_links
-        aws s3 cp s3://czi.miniwdl-test/runs/${GIT_REVISION}/outputs.json -
+        aws s3 ls --recursive s3://czi.miniwdl-test/runs/${GIT_REVISION}/
+        aws s3 cp s3://czi.miniwdl-test/runs/${GIT_REVISION}/outputs.s3.json -
 
     - name: worker sentinel files
       run: |
