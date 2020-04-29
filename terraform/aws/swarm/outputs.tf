@@ -4,5 +4,9 @@ output "manager_ip" {
 }
 output "manager_id" {
   value       = aws_instance.manager.id
-  description = "AWS ID of the manager instance"
+  description = "ID of the manager instance"
+}
+output "worker_image_id" {
+  value       = aws_ami_from_instance.worker_ami.id
+  description = "ID of the worker VM image"
 }

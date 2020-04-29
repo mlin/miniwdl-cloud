@@ -19,7 +19,12 @@ def task(cfg, logger, run_id_stack, run_dir, task, **recv):
     recv = yield recv
     # after container exit: if appropriate (top-level run & user hasn't opted out), write output
     # files back to S3, including an outputs.s3.json with rewritten Files
-    if len(run_id_stack) == 1 and not run_id_stack[0].startswith("download-") and enabled(cfg):
+    if (
+        len(run_id_stack) == 1
+        and not run_id_stack[0].startswith("download-")
+        and cfg["fsx_to_s3"].get_bool("auto")
+    ):
+        logger.info("writing task outputs to S3")
         uploaded = fsx_to_s3(logger, run_dir, ["task.log", "output_links"])
         outputs_s3_json = write_outputs_s3_json(
             logger, recv["outputs"], run_dir, uploaded, task.name
@@ -35,7 +40,8 @@ def workflow(cfg, logger, run_id_stack, run_dir, workflow, **recv):
     # do nothing with inputs
     recv = yield recv
     # after workflow completion:
-    if len(run_id_stack) == 1 and enabled(cfg):
+    if len(run_id_stack) == 1 and cfg["fsx_to_s3"].get_bool("auto"):
+        logger.info("writing workflow outputs to S3")
         uploaded = fsx_to_s3(logger, run_dir, ["workflow.log", "output_links"])
         outputs_s3_json = write_outputs_s3_json(
             logger, recv["outputs"], run_dir, uploaded, workflow.name
@@ -43,10 +49,6 @@ def workflow(cfg, logger, run_id_stack, run_dir, workflow, **recv):
         recv["outputs"] = recv["outputs"].bind("_outputs_s3_json", WDL.Value.File(outputs_s3_json))
     # yield back outputs
     recv = yield recv
-
-
-def enabled(cfg):
-    return not cfg.has_option("fsx_to_s3", "enable") or cfg["fsx_to_s3"].get_bool("enable") == False
 
 
 def fsx_to_s3(logger, run_dir, files):
@@ -72,7 +74,7 @@ def fsx_to_s3(logger, run_dir, files):
             line = line.split("\t")
             if line:
                 assert len(line) == 2 and line[0] not in ans
-                logger.info(_("wrote", uri=line[1]))
+                logger.info(_("wrote", uri=line[1], size=os.path.getsize(line[0])))
                 ans[line[0]] = line[1]
     return ans
 
@@ -85,7 +87,7 @@ def write_outputs_s3_json(logger, outputs, run_dir, uploaded, namespace):
         except KeyError:
             logger.warning(
                 _(
-                    "output file wasn't uploaded to S3; keeping local path in outputs.s3.json",
+                    "output file wasn't written to S3; keeping local path in outputs.s3.json",
                     file=fn,
                 )
             )

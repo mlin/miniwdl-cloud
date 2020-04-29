@@ -96,7 +96,7 @@ On AWS, miniwdl-cloud relies on [FSx for Lustre features](https://aws.amazon.com
 
 **Automatic writeback of workflow outputs:** the manager configures miniwdl to write workflow outputs back to S3 via FSx. For example, if the workflow generates an output file `/mnt/shared/runs/12345_hello/output_links/result/data.txt`, it's written back to `s3://your-bucket/runs/12345_hello/output_links/result/data.txt`. It also writes the workflow log file and `outputs.s3.json`, a version of the outputs JSON with `s3://` URIs instead of local File paths.
 * Only top-level run outputs are written to S3 (excluding nested call outputs that aren't output from the top-level run), while everything remains on `/mnt/shared`.
-* Auto-writeback can be disabled for a run by setting `MINIWDL__FSX_TO_S3__ENABLE=false` in the environment, which can be useful for dev/test without cluttering your S3 bucket.
+* Auto-writeback can be disabled for a run by setting `MINIWDL__FSX_TO_S3__AUTO=false` in the environment, which can be useful for dev/test without cluttering your S3 bucket.
 
 **Custom S3 output:** alternatively, you can instruct FSx to write arbitrary files under `/mnt/shared` to S3 by running `fsx_to_s3 {file_or_directory}`. If the default run folder organization doesn't suit you, then disable auto-writeback, populate a subdirectory tree corresponding to the desired S3 key layout, and then `fsx_to_s3` the subdirectory (e.g. `/mnt/shared/results/data.txt` to `s3://your-bucket/results/data.txt`).
 * To avoid copying large files on Lustre, you can `mv` them in or create additional [hard links](https://en.wikipedia.org/wiki/Hard_link) to their existing inodes (`fsx_to_s3` won't work on symbolic links).

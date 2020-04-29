@@ -23,8 +23,15 @@
         creates: /mnt/scratch/.ok
     - name: copy miniwdl_plugin_fsx_to_s3
       copy:
-        src: miniwdl_plugin_fsx_to_s3
+        src: aws_manager/miniwdl_plugin_fsx_to_s3
         dest: /home/wdler/.local/
     - name: install miniwdl_plugin_fsx_to_s3
       pip:
         name: /home/wdler/.local/miniwdl_plugin_fsx_to_s3
+    - name: miniwdl.cfg
+      copy:
+        src: aws_manager/miniwdl.cfg
+        dest: /home/wdler/.config/miniwdl.cfg
+        owner: wdler
+        group: wdler
+        mode: 0640

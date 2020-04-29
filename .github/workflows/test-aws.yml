@@ -54,12 +54,12 @@ jobs:
       run: echo "::set-env name=MANAGER_IP::$(terraform output manager_ip)"
 
     - name: miniwdl run_self_test
-      run: ssh wdler@${MANAGER_IP} miniwdl run_self_test --dir /mnt/shared/runs
+      run: ssh wdler@${MANAGER_IP} env MINIWDL__FSX_TO_S3__AUTO=false miniwdl run_self_test --dir /mnt/shared/runs
 
     - name: test_containment.sh
       run: |
         scp test/test_containment.sh wdler@${MANAGER_IP}:/home/wdler/
-        ssh wdler@${MANAGER_IP} /bin/bash /home/wdler/test_containment.sh
+        ssh wdler@${MANAGER_IP} env MINIWDL__FSX_TO_S3__AUTO=false /bin/bash /home/wdler/test_containment.sh
 
     - name: DeepVariant_GLnexus
       run: |

@@ -55,7 +55,7 @@ jobs:
       run: echo "::set-env name=MANAGER_IP::$(terraform output manager_ip)"
 
     - name: miniwdl run_self_test
-      run: ssh wdler@${MANAGER_IP} miniwdl run_self_test --dir /mnt/shared/runs
+      run: ssh wdler@${MANAGER_IP} env MINIWDL__FSX_TO_S3__AUTO=false miniwdl run_self_test --dir /mnt/shared/runs
 
     - name: test_stress.sh
       run: |
