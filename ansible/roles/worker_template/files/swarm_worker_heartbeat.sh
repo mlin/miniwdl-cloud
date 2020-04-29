@@ -48,7 +48,7 @@ if [[ ! -f /var/local/swarm_worker_burst ]]; then
 fi
 
 
-if [[ -n $(find "${self}/running_containers" -mmin +30) ]]; then
+if [[ -n $(find "${self}/running-containers" -mmin +30) ]]; then
     echo idle > "${self}/shutdown"
     /sbin/shutdown -h now "swarm worker idle >=30min"
 fi
