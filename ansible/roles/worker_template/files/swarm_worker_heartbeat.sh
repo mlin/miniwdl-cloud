@@ -4,8 +4,8 @@
 # 1) Touch sentinel files on the shared file system, whose timestamps then advertise our status.
 # 2) Querying dockerd for this status info has the side-effect of nudging it to rejoin the swarm
 #    after a reboot.
-# 3) Shut down if we hasn't been in the swarm for >=30min.
-# 4) If we're a "burst" worker, then shut down if we haven't hosted any containers for >=30min.
+# 3) Shut down if we haven't been connected to the swarm for >=30min.
+# 4) If we're a "burst" worker, then shut down if we haven't had any containers for >=30min.
 # 5) If testing environment specifies, shut down based on a (biased) coinflip.
 
 if [[ ! -f /var/local/swarm_worker ]]; then
