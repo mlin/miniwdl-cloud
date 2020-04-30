@@ -1,10 +1,10 @@
 # miniwdl-cloud
 
-Orchestrate a cloud fleet to run [WDL](https://openwdl.org/) workflows using [miniwdl](https://github.com/chanzuckerberg/miniwdl) and [Docker Swarm mode](https://docs.docker.com/engine/swarm/). This is for advanced operators at ease with using [Terraform](https://www.terraform.io/) to provision infrastructure in their own cloud account, and then SSHing in to use `miniwdl run`.
+Orchestrate a cloud fleet to run [WDL](https://openwdl.org/) workflows using [miniwdl](https://github.com/chanzuckerberg/miniwdl) and [Docker Swarm mode](https://docs.docker.com/engine/swarm/).
 
-**Use cases:** The framework is oriented to individual use in WDL data processing projects involving up to ~100 compute nodes (⇒ a few thousand processors), erected as-needed and torn down when done. Hacking on the included Terraform configurations (+ [Ansible](https://www.ansible.com/overview/how-ansible-works) playbooks for host setup) is encouraged. This can be used for automated, large-scale "production" operations too, but other solutions like [Cromwell](https://cromwell.readthedocs.io/en/stable/) or [dxWDL](https://github.com/dnanexus/dxWDL) may be better suited. And running miniwdl locally on a single, very large compute node is *much* simpler if it suffices!
+**Audience:** this framework is for advanced operators at ease with using [Terraform](https://www.terraform.io/) to provision infrastructure in their own cloud account, and then SSHing in to use `miniwdl run`. It's oriented to individual use in WDL data processing projects needing up to ~100 compute nodes (⇒ a few thousand processors), deployed as-needed and torn down when done. It can be used for automated, large-scale "production" operations too, but other solutions like [Cromwell](https://cromwell.readthedocs.io/en/stable/) or [dxWDL](https://github.com/dnanexus/dxWDL) may be better suited. And running miniwdl locally on a single, very large compute node is *much* simpler if it suffices!
 
-AWS is targeted initially, but we've relied on core infrastructure services to preserve portability to other clouds.
+AWS is targeted initially, but we've relied on basic infrastructure services to preserve portability to other clouds. Hacking on the included Terraform configurations (+ [Ansible](https://www.ansible.com/overview/how-ansible-works) playbooks for host setup) is encouraged.
 
   * [Overview of moving parts (AWS)](#overview-of-moving-parts--aws-)
   * [Getting Started](#getting-started)
@@ -18,7 +18,7 @@ AWS is targeted initially, but we've relied on core infrastructure services to p
   * [Scaling up & down](#scaling-up---down)
     + [Worker instance type](#worker-instance-type)
     + [Worker fleet scaling](#worker-fleet-scaling)
-    + [Guidelines](#guidelines)
+    + [Scaling guidelines](#scaling-guidelines)
   * [Monitoring](#monitoring)
   * [Security](#security)
 
@@ -156,11 +156,12 @@ A [pre-configured default policy](https://github.com/mlin/miniwdl-cloud/blob/037
 
 Many workflows involve a processing-intensive scatter, followed by smaller downstream tasks. The typical usage of this scheme is to expand the burst fleet once the scatter is underway, then let it contract while a smaller persistent fleet remains to handle post-processing.
 
-### Guidelines
+### Scaling guidelines
 
 The framework is tested to handle around 100 concurrent tasks comfortably (each potentially using many CPUs).
 * The manager instance type may need an upgrade if the tasks turn over very rapidly and/or output many thousands of files. (Terraform variable `manager_instance_type` defaults to `t3a.medium` and should be set during initial launch)
 * The [Lustre share's performance](https://docs.aws.amazon.com/fsx/latest/LustreGuide/performance.html) is proportional to its provisioned size. (Terraform variable `lustre_GiB` defaults to the minimum of 1200 and can be set an increments of 1200 at initial launch)
+* If miniwdl ([Python GIL](https://wiki.python.org/moin/GlobalInterpreterLock) constrained) seems to be the bottleneck, you can `miniwdl run` separate workflows concurrently from the manager.
 
 If you don't need to run anything for a period of time, then you can zero out the worker fleets, and even stop the manager instance (but its IP may change on relaunch). Or you can `terraform destroy terraform/aws/swarm` to tear down everything and start afresh next time.
 
@@ -183,9 +184,11 @@ Separately,
 
 ## Security
 
-Everything runs within a VPC subnet in the designated availability zone, with only the manager's ssh and mosh ports open to Internet ingress. All instances have [iptables rules](https://github.com/mlin/miniwdl-cloud/tree/master/ansible/roles/aws_docker_config/tasks) to block WDL tasks (running in Docker) from directly contacting Lustre, the Swarm control plane, and the [EC2 instance metadata service](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html). Internet egress is otherwise unrestricted.
+Everything runs within a VPC subnet in the designated availability zone, with only the manager's ssh and mosh ports open to Internet ingress. The SSH key you specify in `environment` is the only one permitting login to the manager, as `wdler` or the default `ubuntu` user. Software updates are only installed during initial deployment, since the infrastructure isn't meant to be long-lived.
 
-Through FSx, you & miniwdl (but not WDL tasks) can read or write anything in the linked S3 bucket. There are otherwise *no* [IAM roles/profiles](https://www.terraform.io/docs/providers/aws/r/iam_instance_profile.html) to access AWS resources. Software updates are only installed during initial terraforming, since the infrastructure isn't meant to be long-lived.
+Within the VPC, instances can communicate for Swarm coordination, Lustre transfers, and manager>worker SSH (using a "jump" key created & stored on the manager). However, they all load [iptables rules](https://github.com/mlin/miniwdl-cloud/tree/master/ansible/roles/aws_docker_config/tasks) to block WDL tasks (running in Docker) from directly contacting Swarm, Lustre, and the [EC2 instance metadata service](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html). Internet egress is otherwise unrestricted.
+
+Through FSx, you & miniwdl (but not WDL tasks) can read or write anything in the linked S3 bucket. There are otherwise *no* [IAM roles/profiles](https://www.terraform.io/docs/providers/aws/r/iam_instance_profile.html) to access AWS resources.
 
 Advanced customizations of these defaults could include:
 * Restrict manager ingress to your source IP only
