@@ -20,6 +20,7 @@ variable "public_key_path" {
 variable "lustre_GiB" {
   description = "FSx for Lustre shared scratch capacity in GiB (multiple of 1200)"
   default     = 1200
+  type        = number
 }
 variable "lustre_weekly_maintenance_start_time" {
   description = "weekly UTC start time of FSX for Lustre 30-minute maintenance window (%u:%H:%M). Consider setting to 6 days, 23.5 hours from now: date --date @$((`date +%s` - 1860)) -u +%u:%H:%M"
@@ -51,8 +52,20 @@ variable "worker_instance_type" {
 variable "worker_count" {
   description = "Number of workers to launch via persistent spot instance requests"
   default     = 1
+  type        = number
 }
 variable "burst_worker_count" {
   description = "Number of workers to launch via one-time spot instance requests (no auto-regeneration after spot interruption or 30min idle)"
   default     = 1
+  type        = number
+}
+variable "burst_worker_idle_minutes" {
+  description = "Burst workers shut themselves down after this many minutes idle"
+  default     = 30
+  type        = number
+}
+variable "block_ec2_imds" {
+  description = "Block WDL tasks from EC2 instance metadata service"
+  default     = true
+  type        = bool
 }

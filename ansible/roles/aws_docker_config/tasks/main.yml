@@ -24,6 +24,7 @@
     destination: 169.254.169.254
     jump: REJECT
     action: insert
+  when: block_ec2_imds|bool
 - name: block Swarm and Lustre VPC ports from docker containers
   iptables:
     chain: DOCKER-USER
@@ -46,3 +47,4 @@
   register: checkblock
   failed_when: checkblock.rc == 0
   changed_when: False
+  when: block_ec2_imds|bool
