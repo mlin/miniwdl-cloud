@@ -131,13 +131,13 @@ Alternatively, you can instruct FSx to write arbitrary files under `/mnt/shared`
 
 ### Worker instance type
 
-The default worker instance type `m5d.4xlarge` can be changed by setting the `worker_instance_type` Terraform variable (environment `TF_var_worker_instance_type` or `terraform apply -var=worker_instance_type=....`). You can change the worker type of an existing cluster by re-running `terraform apply terraform/aws/swarm` with the new variable setting; this will terminate existing workers and launch the new using the existing VM image.
+The default m5d.4xlarge worker instance type can be changed by setting the `worker_instance_type` Terraform variable (environment `TF_var_worker_instance_type` or `terraform apply -var=worker_instance_type=....`). You can change the worker type of an existing cluster by re-running `terraform apply terraform/aws/swarm` with the new variable setting; this will quickly terminate existing workers and launch the new, using the existing VM image.
 
 Considerations:
 
-* The worker instance type should meet or exceed the highest individual `runtime.cpu` and `runtime.memory` reservations expected across the tasks, to ensure every task can get an appropriate worker.
+* The worker instance type should meet or exceed the highest individual `runtime.cpu` and `runtime.memory` reservations expected across the tasks, to ensure there will be an appropriate worker for every task.
   * If a task's resource reservations exceed the worker type, miniwdl will log a warning and "round down" to match. This prevents deadlock, but the task may run suboptimally or crash.
-  * Workers can run multiple smaller tasks concurrently to the extent they fit based on the reservations.
+  * Workers can run multiple smaller tasks concurrently, to the extent their reservations fit.
 * Instance families with [NVMe instance store volumes](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ssd-instance-store.html) are recommended for optimal Docker performance: such as M5d (general-purpose), C5d (compute-optimized), R5d (high mem), and I3 (high mem & scratch).
 * Cost and spot price volatility
 
@@ -147,25 +147,25 @@ There's a simplistic scale-out mechanism involving a main fleet of workers that 
 
 ```terraform apply -var=worker_count=2 -var=burst_worker_count=6 terraform/aws/swarm```
 
-This can be used at the launch of a new cluster, or reapplied to an existing cluster as needed. New workers will join the swarm automatically.
+This can be used at the launch of a new cluster, or reapplied to adjust an existing cluster whenever needed. New workers will join the swarm automatically.
 
 * `worker_count` workers launch under persistent spot instance requests; they shut down when the spot price spikes above the on-demand price, but later recover automatically.
-* `burst_worker_count` workers launch under one-time requests, so they don't recover themselves until you run `terraform apply` again. Additionally, burst workers self-terminate after 30 minutes of inactivity (no task containers).
+* `burst_worker_count` workers launch under one-time requests, so they don't recover until you run `terraform apply` again. Additionally, burst workers self-terminate after 30 minutes without running tasks (configurable by `burst_worker_idle_minutes`).
 
 A [pre-configured default policy](https://github.com/mlin/miniwdl-cloud/blob/037d49b7fafc05d465b80a31d48e8c77a02fc496/ansible/files/aws_manager/miniwdl.cfg#L23) will retry tasks interrupted by a worker shutting down, up to three attempts total.
 
-Many workflows involve a processing-intensive scatter, followed by smaller downstream tasks. The typical usage of this scheme is to expand the burst fleet once the scatter is underway, then let it contract while a smaller persistent fleet remains to handle post-processing.
+Many workflows involve a processing-intensive scatter, followed by smaller downstream tasks. The typical usage of this scheme is to expand the burst fleet once the scatter is underway, then let it attrit while a smaller persistent fleet remains to handle post-processing.
 
 ### Scaling guidelines
 
 The framework is tested to handle around 100 concurrent tasks comfortably (each potentially using many CPUs).
 * The manager instance type may need an upgrade if the tasks turn over very rapidly and/or output many thousands of files. (Terraform variable `manager_instance_type` defaults to `t3a.medium` and should be set during initial launch)
-* The [Lustre share's performance](https://docs.aws.amazon.com/fsx/latest/LustreGuide/performance.html) is proportional to its provisioned size. (Terraform variable `lustre_GiB` defaults to the minimum of 1200 and can be set an increments of 1200 at initial launch)
-* If miniwdl ([Python GIL](https://wiki.python.org/moin/GlobalInterpreterLock) constrained) seems to be the bottleneck, you can `miniwdl run` separate workflows concurrently from the manager.
-
-If you don't need to run anything for a period of time, then you can zero out the worker fleets, and even stop the manager instance (but its IP may change on relaunch). Or you can `terraform destroy terraform/aws/swarm` to tear down everything and start afresh next time.
+* The [Lustre share's performance](https://docs.aws.amazon.com/fsx/latest/LustreGuide/performance.html) is proportional to its provisioned size. (Terraform variable `lustre_GiB` defaults to the minimum of 1200 and can be set in increments of 1200 at initial launch)
+* If miniwdl itself seems to be a bottleneck (as a Python process subject to [the GIL](https://wiki.python.org/moin/GlobalInterpreterLock)), you can `miniwdl run` separate workflows concurrently from the manager.
 
 Also see the [miniwdl documentation's guidelines](https://miniwdl.readthedocs.io/en/latest/runner_advanced.html#wdl-guidelines) for scalable WDL patterns. Here, it's especially helpful if [tasks write scratch files under `$TMPDIR`](https://miniwdl.readthedocs.io/en/latest/runner_advanced.html#write-scratch-files-under-tmpdir) instead of their working directory. That's because `$TMPDIR` is on the workers' local scratch volumes, while the working directory is on the Lustre share.
+
+If you don't need to run anything for a period of time, then you can zero out the worker fleets, and even stop the manager instance (but its IP may change). Or you can `terraform destroy terraform/aws/swarm` to tear down everything and start afresh next time.
 
 ## Monitoring
 
@@ -186,12 +186,12 @@ Separately,
 
 Everything runs within a VPC subnet in the designated availability zone, with only the manager's ssh and mosh ports open to Internet ingress. The SSH key you specify in `environment` is the only one permitting login to the manager, as `wdler` or the default `ubuntu` user. Software updates are only installed during initial deployment, since the infrastructure isn't meant to be long-lived.
 
-Within the VPC, instances can communicate for Swarm coordination, Lustre transfers, and manager>worker SSH (using a "jump" key created & stored on the manager). However, they all load [iptables rules](https://github.com/mlin/miniwdl-cloud/tree/master/ansible/roles/aws_docker_config/tasks) to block WDL tasks (running in Docker) from directly contacting Swarm, Lustre, and the [EC2 instance metadata service](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html). Internet egress is otherwise unrestricted.
+Within the VPC, instances communicate for Swarm orchestration, Lustre activity, and manager>worker SSH (using a "jump" key created & stored on the manager). However, they all load [iptables rules](https://github.com/mlin/miniwdl-cloud/tree/master/ansible/roles/aws_docker_config/tasks) to block WDL tasks (Docker containers) from directly contacting Swarm, Lustre, and the [EC2 instance metadata service](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html). The latter can be lifted by Terraform variable `block_ec2_imds=false`.
 
 Through FSx, you & miniwdl (but not WDL tasks) can read or write anything in the linked S3 bucket. There are otherwise *no* [IAM roles/profiles](https://www.terraform.io/docs/providers/aws/r/iam_instance_profile.html) to access AWS resources.
 
 Advanced customizations of these defaults could include:
-* Restrict manager ingress to your source IP only
-* [TOTP factor](https://aws.amazon.com/blogs/startups/securing-ssh-to-amazon-ec2-linux-hosts/) for SSH
 * IAM role for manager and/or workers
-* Unblock instance metadata so that WDL tasks can assume IAM role
+* Restrict manager ingress to your source IP
+* [TOTP factor](https://aws.amazon.com/blogs/startups/securing-ssh-to-amazon-ec2-linux-hosts/) for SSH
+* Restrict Internet egress to necessary ports & endpoints (e.g. Docker registry)

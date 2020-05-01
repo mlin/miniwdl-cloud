@@ -24,6 +24,8 @@ export TF_VAR_name_tag_prefix=my_miniwdl_cloud
 # Sets the 'owner' tag of each AWS resource
 export TF_VAR_owner_tag=your@email.com
 
+# see all available variables in teraform/aws/swarm/variables.tf
+
 
 # Display information for verification
 aws sts get-caller-identity
