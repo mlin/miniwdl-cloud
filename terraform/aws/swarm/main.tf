@@ -85,6 +85,7 @@ resource "aws_instance" "manager" {
   subnet_id              = module.common.subnet_id
   vpc_security_group_ids = [module.common.sg_mosh_id, module.common.sg_lustre_id, aws_security_group.sg_swarm_manager.id, aws_security_group.sg_swarm.id]
   key_name               = module.common.ec2_key_name
+  iam_instance_profile   = module.common.profile_name
 
   root_block_device {
     volume_size = 40

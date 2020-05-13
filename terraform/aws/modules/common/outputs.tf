@@ -35,3 +35,8 @@ output "lustre_dns_name" {
   value       = aws_fsx_lustre_file_system.lustre.dns_name
   description = "internal Lustre DNS name"
 }
+
+output "profile_name" {
+  value       = aws_iam_instance_profile.profile.name
+  description = "instance profile with r/w access to s3bucket"
+}

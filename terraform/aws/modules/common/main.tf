@@ -49,14 +49,14 @@ resource "aws_route_table_association" "rta_subnet_public" {
 data "aws_ami" "ubuntu_ami" {
   most_recent = true
 
+  # The YYYYMM pattern below should be advanced from time to time, while ensuring we get an AMI
+  # kernel version that has Lustre client modules available from AWS' apt repo. See:
+  #   https://docs.aws.amazon.com/fsx/latest/LustreGuide/install-lustre-client.html
+  #   aws s3 cp s3://fsx-lustre-client-repo/ubuntu/dists/bionic/main/binary-amd64/Packages - | grep "Package: lustre-client-modules-"
+  # The Ansible playbooks do perform 'apt upgrade' after pinning the kernel version.
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-202003*"]
   }
 
   filter {
@@ -132,4 +132,61 @@ resource "aws_fsx_lustre_file_system" "lustre" {
 resource "aws_key_pair" "ec2key" {
   key_name   = "${var.name_tag_prefix}_key"
   public_key = file(var.public_key_path)
+}
+
+resource "aws_iam_role" "role" {
+  name = "${var.name_tag_prefix}_role"
+
+  assume_role_policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": "sts:AssumeRole",
+        "Principal": {
+          "Service": "ec2.amazonaws.com"
+        },
+        "Effect": "Allow",
+        "Sid": ""
+      }
+    ]
+  }
+  EOF
+
+  tags = {
+    Name  = "${var.name_tag_prefix}_role"
+    owner = var.owner_tag
+  }
+}
+
+resource "aws_iam_instance_profile" "profile" {
+  name = "${var.name_tag_prefix}_profile"
+  role = aws_iam_role.role.name
+}
+
+resource "aws_iam_role_policy" "policy" {
+  name = "${var.name_tag_prefix}_policy"
+  role = aws_iam_role.role.id
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": ["s3:ListBucket"],
+        "Resource": ["arn:aws:s3:::${var.s3bucket}"]
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ],
+        "Resource": ["arn:aws:s3:::${var.s3bucket}/*"]
+      }
+    ]
+  }
+  EOF
 }
