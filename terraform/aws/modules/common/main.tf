@@ -168,6 +168,7 @@ resource "aws_iam_role_policy" "policy" {
   name = "${var.name_tag_prefix}_policy"
   role = aws_iam_role.role.id
 
+  # Allow read/write access to s3bucket, and read access to all ECR docker registries:
   policy = <<-EOF
   {
     "Version": "2012-10-17",
@@ -185,7 +186,25 @@ resource "aws_iam_role_policy" "policy" {
           "s3:DeleteObject"
         ],
         "Resource": ["arn:aws:s3:::${var.s3bucket}/*"]
-      }
+      },
+      {
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetRepositoryPolicy",
+                "ecr:DescribeRepositories",
+                "ecr:ListImages",
+                "ecr:DescribeImages",
+                "ecr:BatchGetImage",
+                "ecr:GetLifecyclePolicy",
+                "ecr:GetLifecyclePolicyPreview",
+                "ecr:ListTagsForResource",
+                "ecr:DescribeImageScanFindings"
+            ],
+            "Resource": "*"
+        }
     ]
   }
   EOF
