@@ -23,7 +23,7 @@ variable "lustre_GiB" {
   type        = number
 }
 variable "lustre_weekly_maintenance_start_time" {
-  description = "weekly UTC start time of FSX for Lustre 30-minute maintenance window (%u:%H:%M). Consider setting to 6 days, 23.5 hours from now: date --date @$((`date +%s` - 1860)) -u +%u:%H:%M"
+  description = "weekly UTC start time of FSx for Lustre 30-minute maintenance window (%u:%H:%M). Consider setting to 6 days, 23.5 hours from now: date --date @$((`date +%s` - 1860)) -u +%u:%H:%M"
   default     = "1:00:00"
 }
 variable "s3bucket" {
@@ -64,8 +64,8 @@ variable "burst_worker_idle_minutes" {
   default     = 30
   type        = number
 }
-variable "block_ec2_imds" {
-  description = "Block WDL tasks from EC2 instance metadata service"
-  default     = true
+variable "worker_privileges" {
+  description = "Permit tasks to assume IAM role with s3bucket read/write + ECR read-only. Use only with trusted WDL and docker images"
+  default     = false
   type        = bool
 }

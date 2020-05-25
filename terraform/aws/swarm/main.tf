@@ -122,7 +122,7 @@ resource "aws_instance" "manager" {
       "sudo add-apt-repository --yes universe",
       "sudo apt-add-repository --yes --update ppa:ansible/ansible",
       "sudo apt-get -qq install -y python3-pip ansible",
-      "ansible-playbook --connection=local -i 'localhost,'  --extra-vars 'ansible_python_interpreter=auto public_key_path=/var/provision/${basename(var.public_key_path)} lustre_dns_name=${module.common.lustre_dns_name}  block_ec2_imds=${var.block_ec2_imds} s3_export_path=s3://${var.s3bucket}/${var.outputs_prefix} miniwdl_branch=${var.miniwdl_branch}' /var/provision/ansible/aws_manager.yml"
+      "ansible-playbook --connection=local -i 'localhost,'  --extra-vars 'ansible_python_interpreter=auto public_key_path=/var/provision/${basename(var.public_key_path)} lustre_dns_name=${module.common.lustre_dns_name}  block_ec2_imds=false s3_export_path=s3://${var.s3bucket}/${var.outputs_prefix} miniwdl_branch=${var.miniwdl_branch}' /var/provision/ansible/aws_manager.yml"
     ]
 
     connection {
@@ -194,7 +194,7 @@ resource "aws_instance" "worker_template" {
   # run ansible playbooks via jump ssh
   provisioner "remote-exec" {
     inline = [
-      "ansible-playbook -u ubuntu -i '${self.private_ip},' --extra-vars 'ansible_python_interpreter=auto lustre_dns_name=${module.common.lustre_dns_name} s3_export_path=s3://${var.s3bucket}/${var.outputs_prefix} block_ec2_imds=${var.block_ec2_imds}' /var/provision/ansible/aws_worker_template.yml"
+      "ansible-playbook -u ubuntu -i '${self.private_ip},' --extra-vars 'ansible_python_interpreter=auto lustre_dns_name=${module.common.lustre_dns_name} s3_export_path=s3://${var.s3bucket}/${var.outputs_prefix} block_ec2_imds=${var.worker_privileges ? false : true}' /var/provision/ansible/aws_worker_template.yml"
     ]
 
     connection {
@@ -237,6 +237,8 @@ resource "aws_spot_instance_request" "persistent_worker" {
   /root/swarm_worker_join.sh
   EOF
 
+  iam_instance_profile = var.worker_privileges ? module.common.profile_name : null
+
   tags = {
     Name  = "${var.name_tag_prefix}_persistent_worker"
     owner = var.owner_tag
@@ -258,6 +260,8 @@ resource "aws_spot_instance_request" "burst_worker" {
   echo ${var.burst_worker_idle_minutes} > /var/local/swarm_worker_burst  # inactivity self-shutdown timeout (minutes)
   /root/swarm_worker_join.sh
   EOF
+
+  iam_instance_profile = var.worker_privileges ? module.common.profile_name : null
 
   tags = {
     Name  = "${var.name_tag_prefix}_burst_worker"

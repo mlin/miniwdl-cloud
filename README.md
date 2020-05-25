@@ -21,6 +21,8 @@ AWS is targeted initially, but we've relied on basic infrastructure services to 
     + [Scaling guidelines](#scaling-guidelines)
   * [Monitoring](#monitoring)
   * [Security](#security)
+  * [Summary of key Terraform variables](#summary-of-key-terraform-variables)
+  <!-- https://ecotrust-canada.github.io/markdown-toc/ -->
 
 ## Overview of moving parts (AWS)
 
@@ -87,7 +89,7 @@ This takes about 20 minutes to:
 
 ### Connect to manager and run workflows
 
-Once the deployment is complete, start a [mosh](https://mosh.org/) SSH session with the new manager instance. 
+Once the deployment is complete, start a [mosh](https://mosh.org/) SSH session with the new manager instance.
 
 ```
 mosh wdler@$(terraform output manager_ip)
@@ -114,7 +116,7 @@ On AWS, miniwdl-cloud relies on [FSx for Lustre features](https://aws.amazon.com
 
 During creation of the FSx for Lustre share, it's populated with file & directory entries mirroring your S3 bucket. For example, the object `s3://your-bucket/foo/bar.txt` surfaces as `/mnt/shared/foo/bar.txt`, which `miniwdl run` can use as an input like any local file. (FSx automatically transfers the S3 data when needed; [see its docs](https://docs.aws.amazon.com/fsx/latest/LustreGuide/fsx-data-repositories.html))
 
-Alternatively, you can use `aws s3` on the manager instance to download files onto `/mnt/shared` for use as WDL inputs; the manager has an IAM role granting it read/write access to the same bucket. This is suboptimal for large files because it pipes them through the small manager instance, so use FSx if possible. It won't work to supply `s3://` URIs in WDL inputs directly, because workers don't have the IAM role by default, but it can be made so; see Security, below.
+Alternatively, you can use `aws s3 cp` or `aws s3 sync` on the manager instance to download files onto `/mnt/shared` for use as WDL inputs; the manager has an IAM role granting it read/write access to the same bucket. The FSx approach is preferable to this because it avoids piping data through the small manager instance. It won't work to supply `s3://` URIs in WDL inputs directly, because workers don't have the IAM role by default, but it can be made so; see Security, below.
 
 ### Automatic writeback of workflow outputs
 
@@ -128,6 +130,8 @@ You can also instruct FSx to write arbitrary files under `/mnt/shared` to S3 by 
 * To avoid copying large files on Lustre, you can `mv` them in or create additional [hard links](https://en.wikipedia.org/wiki/Hard_link) to their existing inodes (`fsx_to_s3` won't work on symbolic links).
 * Take care that it's possible to overwrite existing S3 objects when `fsx_to_s3` writes to keys derived from the Lustre file paths.
 * The [`fsx_to_s3` script](https://github.com/mlin/miniwdl-cloud/blob/master/ansible/roles/aws_fsx_lustre_client/files/fsx_to_s3) awaits completion of the S3 transfers. [FSx docs](https://docs.aws.amazon.com/fsx/latest/LustreGuide/exporting-files-hsm.html) describe low-level commands available to initiate them asynchronously.
+
+Lastly, you can use `aws s3 cp` or `aws s3 sync` on the manager to upload output files; but `fsx_to_s3` is preferable because it avoids piping data through the small manager instance.
 
 ## Scaling up & down
 
@@ -188,16 +192,35 @@ Separately,
 
 Everything runs within a VPC subnet in the designated availability zone, with only the manager's ssh and mosh ports open to Internet ingress. The SSH key you specify in `environment` is the only one permitting login to the manager, as `wdler` or the default `ubuntu` user. Software updates are only installed during initial deployment, since the infrastructure isn't meant to be long-lived.
 
-Within the VPC, instances communicate for Swarm orchestration, Lustre activity, and manager>worker SSH (using a "jump" key created & stored on the manager). However, they all load [iptables rules](https://github.com/mlin/miniwdl-cloud/tree/master/ansible/roles/aws_docker_config/tasks) to block WDL tasks (Docker containers) from directly contacting Swarm, Lustre, and the [EC2 instance metadata service](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html). The latter can be lifted by Terraform variable `block_ec2_imds=false` during initial deployment.
+Within the VPC, instances communicate for Swarm orchestration, Lustre activity, and manager>worker SSH (using a "jump" key created & stored on the manager). However, they all load [iptables rules](https://github.com/mlin/miniwdl-cloud/tree/master/ansible/roles/aws_docker_config/tasks) to block WDL tasks (Docker containers) from directly contacting Swarm, Lustre, and (unless `worker_privileges=true`) the [EC2 instance metadata service](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html).
 
 Through FSx, you & miniwdl (but not WDL tasks) can read or write anything in the linked S3 bucket. The manager also has an IAM role+profile+policy granting read/write access to the S3 bucket, and read-only access to ECR docker registries. By default, the workers do *not* have this role.
 
 Potential customizations of these defaults:
-* Add the IAM role to the workers as well as the manager:
-  * Copy the line `iam_instance_profile = module.common.profile_name` from the `manager` to the `persistent_worker` and `burst_worker` configurations in `terraform/aws/swarm/main.tf`.
-  * Also setting the Terraform variable `block_ec2_imds=false` (during initial deployment) will allow WDL tasks to assume the role themselves; use only trusted WDL & Docker images with this configuration.
-  * That includes WDL tasks miniwdl can run to automatically download WDL input `File`s supplied as `s3://` URIs, an alternative to FSx mirroring for S3 input files.
+* Set `worker_privileges=true` to allow WDL tasks to assume that IAM role (by obtaining credentials from EC2 instance metadata)
+  * Enables miniwdl's tasks to automatically download WDL input `File`s supplied as `s3://` URIs, an alternative to FSx mirroring
+  * Use only trusted WDL & Docker images with this configuration
 * Add other useful powers to the IAM policy associated with the role
 * Restrict manager ingress to your source IP
 * [TOTP factor](https://aws.amazon.com/blogs/startups/securing-ssh-to-amazon-ec2-linux-hosts/) for SSH
 * Restrict Internet egress to necessary ports & endpoints (e.g. Docker registry)
+
+## Summary of key Terraform variables
+
+| Variable | Default | Mutable after launch? | Synopsis
+| -- | -- | :--: | -- |
+| public_key_path | | | local public key file to use for manager SSH |
+| region | | | AWS region |
+| availability_zone | | | AWS availability zone (in region) |
+| s3bucket | | | S3 bucket name (in region) |
+| lustre_GiB | 1200 | | Lustre capacity (increments of 1200) |
+| manager_instance_type | t2a.medium | | EC2 instance type for manager |
+| worker_privileges | false | | tasks may assume manager IAM role (s3bucket read/write + ECR read-only)|
+| worker_instance_type | m5d.4xlarge | Y | EC2 instance type for workers |
+| worker_count | 1 | Y | persistent worker fleet size |
+| burst_worker_count | 1 | Y | one-time worker fleet size |
+| burst_worker_idle_minutes | 30 | Y | idle period after which burst workers self-terminate |
+
+Set variables for first launch by editing `./environment` with `export TF_VAR_{variable}={value}` and `source environment`.
+
+Set mutable variables with `terraform apply -var={variable}={value}`. Changing `worker_instance_type` replaces all workers, and changing `burst_worker_idle_minutes` replaces all burst workers.
