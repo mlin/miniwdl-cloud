@@ -25,6 +25,8 @@
       copy:
         src: "{{ item }}"
         dest: /home/wdler/.local/
+        owner: wdler
+        group: wdler
       loop:
         - aws_manager/miniwdl_plugin_fsx_to_s3
         - aws_manager/miniwdl_download_awscli

@@ -54,12 +54,15 @@
   loop:
     - hard
     - soft
-- name: /home/wdler/.config
+- name: /home/wdler
   file:
-    path: /home/wdler/.config
+    path: "{{ item }}"
     state: directory
     owner: wdler
     group: wdler
+  loop:
+    - /home/wdler/.config
+    - /home/wdler/.local/bin
 - name: prepare /mnt/shared/runs
   file:
     path: /mnt/shared/runs
