@@ -54,9 +54,10 @@ data "aws_ami" "ubuntu_ami" {
   #   https://docs.aws.amazon.com/fsx/latest/LustreGuide/install-lustre-client.html
   #   aws s3 cp s3://fsx-lustre-client-repo/ubuntu/dists/bionic/main/binary-amd64/Packages - | grep "Package: lustre-client-modules-"
   # The Ansible playbooks do perform 'apt upgrade' after pinning the kernel version.
+  #   aws ec2 describe-images --owners 099720109477 --filters 'Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-202006*'
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-202003*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-202006*"]
   }
 
   filter {
