@@ -29,13 +29,11 @@
         group: wdler
       loop:
         - aws_manager/miniwdl_plugin_fsx_to_s3
-        - aws_manager/miniwdl_download_awscli
     - name: install miniwdl plugins
       pip:
         name: "{{ item }}"
       loop:
         - /home/wdler/.local/miniwdl_plugin_fsx_to_s3
-        - /home/wdler/.local/miniwdl_download_awscli
     - name: miniwdl.cfg
       copy:
         src: aws_manager/miniwdl.cfg

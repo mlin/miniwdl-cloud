@@ -61,7 +61,7 @@ git clone https://github.com/mlin/miniwdl-cloud.git
 cd miniwdl-cloud
 ```
 
-Open the [`environment`](https://github.com/mlin/miniwdl-cloud/blob/master/environment) file in your editor and customize it as needed, in particular setting the AWS region/AZ and S3 bucket name. Then,
+Open the [`environment`](https://github.com/mlin/miniwdl-cloud/blob/main/environment) file in your editor and customize it as needed, in particular setting the AWS region/AZ and S3 bucket name. Then,
 
 ```
 source environment
@@ -129,7 +129,7 @@ The manager configures miniwdl to write workflow outputs back to S3 via FSx. For
 You can also instruct FSx to write arbitrary files under `/mnt/shared` to S3 by running `fsx_to_s3 {file_or_directory}`. If the default run folder organization doesn't suit you, then disable auto-writeback, populate a subdirectory tree corresponding to the desired S3 key layout, and then `fsx_to_s3` the subdirectory (e.g. `/mnt/shared/results/data.txt` to `s3://your-bucket/results/data.txt`).
 * To avoid copying large files on Lustre, you can `mv` them in or create additional [hard links](https://en.wikipedia.org/wiki/Hard_link) to their existing inodes (`fsx_to_s3` won't work on symbolic links).
 * Take care that it's possible to overwrite existing S3 objects when `fsx_to_s3` writes to keys derived from the Lustre file paths.
-* The [`fsx_to_s3` script](https://github.com/mlin/miniwdl-cloud/blob/master/ansible/roles/aws_fsx_lustre_client/files/fsx_to_s3) awaits completion of the S3 transfers. [FSx docs](https://docs.aws.amazon.com/fsx/latest/LustreGuide/exporting-files-hsm.html) describe low-level commands available to initiate them asynchronously.
+* The [`fsx_to_s3` script](https://github.com/mlin/miniwdl-cloud/blob/main/ansible/roles/aws_fsx_lustre_client/files/fsx_to_s3) awaits completion of the S3 transfers. [FSx docs](https://docs.aws.amazon.com/fsx/latest/LustreGuide/exporting-files-hsm.html) describe low-level commands available to initiate them asynchronously.
 
 Lastly, you can use `aws s3 cp` or `aws s3 sync` on the manager to upload output files; but `fsx_to_s3` is preferable because it avoids piping data through the small manager instance.
 
@@ -181,7 +181,7 @@ From the manager, you might start a workflow running and then [open more byobu w
 * `docker service ls` shows the running and queued tasks
 * You can "tail" tasks' standard error streams from `stderr.txt` in the run directory under `/mnt/shared` (even if miniwdl isn't running with verbose logging)
 * `htop` to monitor stress on the manager instance itself
-* `tree -tD /mnt/shared/.swarm/workers` shows a custom directory tree whose contents and modification times reflect worker status; see [swarm_worker_heartbeat.sh](https://github.com/mlin/miniwdl-cloud/blob/master/ansible/roles/worker_template/files/swarm_worker_heartbeat.sh) for details.
+* `tree -tD /mnt/shared/.swarm/workers` shows a custom directory tree whose contents and modification times reflect worker status; see [swarm_worker_heartbeat.sh](https://github.com/mlin/miniwdl-cloud/blob/main/ansible/roles/worker_template/files/swarm_worker_heartbeat.sh) for details.
 * As `wdler` you can ssh to any worker (+sudo)
 
 Separately,
@@ -192,7 +192,7 @@ Separately,
 
 Everything runs within a VPC subnet in the designated availability zone, with only the manager's ssh and mosh ports open to Internet ingress. The SSH key you specify in `environment` is the only one permitting login to the manager, as `wdler` or the default `ubuntu` user. Software updates are only installed during initial deployment, since the infrastructure isn't meant to be long-lived.
 
-Within the VPC, instances communicate for Swarm orchestration, Lustre activity, and manager>worker SSH (using a "jump" key created & stored on the manager). However, they all load [iptables rules](https://github.com/mlin/miniwdl-cloud/tree/master/ansible/roles/aws_docker_config/tasks) to block WDL tasks (Docker containers) from directly contacting Swarm, Lustre, and (unless `worker_privileges=true`) the [EC2 instance metadata service](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html).
+Within the VPC, instances communicate for Swarm orchestration, Lustre activity, and manager>worker SSH (using a "jump" key created & stored on the manager). However, they all load [iptables rules](https://github.com/mlin/miniwdl-cloud/tree/main/ansible/roles/aws_docker_config/tasks) to block WDL tasks (Docker containers) from directly contacting Swarm, Lustre, and (unless `worker_privileges=true`) the [EC2 instance metadata service](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html).
 
 Through FSx, you & miniwdl (but not WDL tasks) can read or write anything in the linked S3 bucket. The manager also has an IAM role+profile+policy granting read/write access to the S3 bucket, and read-only access to ECR docker registries. By default, the workers do *not* have this role.
 

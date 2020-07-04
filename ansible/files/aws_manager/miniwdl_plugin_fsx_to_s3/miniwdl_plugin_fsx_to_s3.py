@@ -1,6 +1,6 @@
 # This miniwdl plugin installs on the AWS swarm manager. Upon success of a top-level run, it writes
 # the output files to the linked S3 bucket by invoking the fsx_to_s3 utility (which comes with the
-# aws_fsx_lustre_client role) on the output_links folder. It also writes the log, and a version of
+# aws_fsx_lustre_client role) on the out/ links folder. It also writes the log, and a version of
 # the outputs JSON with the local File paths rewritten using the S3 URIs (outputs.s3.json). The URI
 # to outputs.s3.json is injected into the local run outputs.
 # These functions can be disabled for a run by setting environment MINIWDL__FSX_TO_S3__ENABLE=false
@@ -25,7 +25,7 @@ def task(cfg, logger, run_id_stack, run_dir, task, **recv):
         and cfg["fsx_to_s3"].get_bool("auto")
     ):
         logger.info("writing task outputs to S3")
-        uploaded = fsx_to_s3(logger, run_dir, ["task.log", "output_links"])
+        uploaded = fsx_to_s3(logger, run_dir, ["task.log", "out"])
         outputs_s3_json = write_outputs_s3_json(
             logger, recv["outputs"], run_dir, uploaded, task.name
         )
@@ -42,7 +42,7 @@ def workflow(cfg, logger, run_id_stack, run_dir, workflow, **recv):
     # after workflow completion:
     if len(run_id_stack) == 1 and cfg["fsx_to_s3"].get_bool("auto"):
         logger.info("writing workflow outputs to S3")
-        uploaded = fsx_to_s3(logger, run_dir, ["workflow.log", "output_links"])
+        uploaded = fsx_to_s3(logger, run_dir, ["workflow.log", "out"])
         outputs_s3_json = write_outputs_s3_json(
             logger, recv["outputs"], run_dir, uploaded, workflow.name
         )
