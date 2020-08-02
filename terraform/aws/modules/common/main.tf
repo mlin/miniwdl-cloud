@@ -120,8 +120,8 @@ resource "aws_fsx_lustre_file_system" "lustre" {
   storage_capacity              = var.lustre_GiB
   subnet_ids                    = [aws_subnet.subnet_public.id]
   security_group_ids            = [aws_security_group.sg_lustre.id]
-  import_path                   = "s3://${var.s3bucket}/${var.inputs_prefix}"
-  export_path                   = "s3://${var.s3bucket}/${var.outputs_prefix}"
+  import_path                   = var.inputs_prefix != "" ? "s3://${var.s3bucket}/${var.inputs_prefix}" : "s3://${var.s3bucket}"
+  export_path                   = var.outputs_prefix != "" ? "s3://${var.s3bucket}/${var.outputs_prefix}" : "s3://${var.s3bucket}"
   weekly_maintenance_start_time = var.lustre_weekly_maintenance_start_time
 
   tags = {
