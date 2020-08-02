@@ -52,12 +52,12 @@ data "aws_ami" "ubuntu_ami" {
   # The YYYYMM pattern below should be advanced from time to time, while ensuring we get an AMI
   # kernel version that has Lustre client modules available from AWS' apt repo. See:
   #   https://docs.aws.amazon.com/fsx/latest/LustreGuide/install-lustre-client.html
-  #   aws s3 cp s3://fsx-lustre-client-repo/ubuntu/dists/bionic/main/binary-amd64/Packages - | grep "Package: lustre-client-modules-"
+  #   aws s3 cp s3://fsx-lustre-client-repo/ubuntu/dists/focal/main/binary-amd64/Packages - | grep "Package: lustre-client-modules-"
   # The Ansible playbooks do perform 'apt upgrade' after pinning the kernel version.
-  #   aws ec2 describe-images --owners 099720109477 --filters 'Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-202006*'
+  #   aws ec2 describe-images --owners 099720109477 --filters 'Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-202007*'
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-202006*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-202007*"]
   }
 
   filter {

@@ -6,7 +6,7 @@
     - ClientAliveInterval 60
     - ClientAliveCountMax 5
 - name: apt upgrade
-  apt: upgrade=full autoremove=yes
+  apt: upgrade=full autoremove=yes update_cache=yes
 - name: apt packages
   apt:
     pkg:
@@ -70,10 +70,10 @@
     owner: wdler
     group: wdler
 - name: wdler TMPDIR
-  lineinfile: dest=/home/wdler/.profile line="export TMPDIR=/mnt/scratch/tmp"
-  become_user: wdler
-  become: yes
+  lineinfile:
+    dest: /home/wdler/.profile
+    line: "export TMPDIR=/mnt/scratch/tmp"
+    owner: wdler
+    group: wdler
 - name: cd /mnt/shared/runs
   lineinfile: dest=/home/wdler/.profile line="cd /mnt/shared/runs"
-  become_user: wdler
-  become: yes

@@ -15,7 +15,7 @@
     url: https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-ubuntu-public-key.asc
 - name: AWS FSx Lustre apt repo
   apt_repository:
-    repo: deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu bionic main
+    repo: deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu focal main
 - name: AWS FSx Lustre client modules
   shell: apt-get install -y lustre-client-modules-$(uname -r) && modprobe lustre  # noqa 303
   changed_when: False
