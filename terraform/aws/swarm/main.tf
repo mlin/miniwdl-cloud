@@ -96,6 +96,13 @@ resource "aws_instance" "manager" {
     owner = var.owner_tag
   }
 
+  # touch public SSH key file; we'll populate it in another local-exec below, but we want to create
+  # it immediately so that the local_file resource below won't wedge the terraform plan if this
+  # instance provisioning process fails for any reason
+  provisioner "local-exec" {
+    command = "touch ${path.cwd}/jump.id_rsa.pub.${self.id} && chmod ug+rw ${path.cwd}/jump.id_rsa.pub.${self.id}"
+  }
+
   # wait for ssh availability
   provisioner "remote-exec" {
     inline = [
@@ -119,8 +126,9 @@ resource "aws_instance" "manager" {
   provisioner "remote-exec" {
     inline = [
       "sudo chmod -R a+r /var/provision",
+      "sudo add-apt-repository universe",
       "sudo apt-get -qq update",
-      "sudo apt-get -qq install -y python3-pip ansible",
+      "sudo bash -c 'apt-get install -y python3-pip ansible || (sleep 60 && apt-get install -y python3-pip ansible)'",
       "echo '[defaults]' > ~/.ansible.cfg",
       "echo 'allow_world_readable_tmpfiles=true' >> ~/.ansible.cfg",
       "ansible-playbook --connection=local -i 'localhost,'  --extra-vars 'ansible_python_interpreter=auto public_key_path=/var/provision/${basename(var.public_key_path)} lustre_dns_name=${module.common.lustre_dns_name}  block_ec2_imds=false s3_export_path=s3://${var.s3bucket}/${var.outputs_prefix} miniwdl_branch=${var.miniwdl_branch}' /var/provision/ansible/aws_manager.yml"
@@ -183,7 +191,7 @@ resource "aws_instance" "worker_template" {
 
   # wait for ssh availability (jumping via manager)
   provisioner "remote-exec" {
-    inline = ["while ! ssh -o StrictHostKeyChecking=no ubuntu@${self.private_ip} whoami ; do sleep 3; done"]
+    inline = ["while ! ssh -o StrictHostKeyChecking=no ubuntu@${self.private_ip} sudo add-apt-repository universe ; do sleep 3; done"]
 
     connection {
       type = "ssh"
