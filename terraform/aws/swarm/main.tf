@@ -126,7 +126,8 @@ resource "aws_instance" "manager" {
   provisioner "remote-exec" {
     inline = [
       "sudo chmod -R a+r /var/provision",
-      "sudo apt-get update",
+      "sudo add-apt-repository universe",
+      "sudo apt-get -qq update",
       "sudo bash -c 'apt-get install -y python3-pip ansible || (sleep 60 && apt-get install -y python3-pip ansible)'",
       "echo '[defaults]' > ~/.ansible.cfg",
       "echo 'allow_world_readable_tmpfiles=true' >> ~/.ansible.cfg",
@@ -190,7 +191,7 @@ resource "aws_instance" "worker_template" {
 
   # wait for ssh availability (jumping via manager)
   provisioner "remote-exec" {
-    inline = ["while ! ssh -o StrictHostKeyChecking=no ubuntu@${self.private_ip} whoami ; do sleep 3; done"]
+    inline = ["while ! ssh -o StrictHostKeyChecking=no ubuntu@${self.private_ip} sudo add-apt-repository universe ; do sleep 3; done"]
 
     connection {
       type = "ssh"
