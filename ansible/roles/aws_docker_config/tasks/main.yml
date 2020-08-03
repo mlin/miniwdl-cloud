@@ -10,6 +10,22 @@
     owner: root
     group: root
     mode: 0700
+- name: amazon-ecr-credential-helper
+  apt: pkg=amazon-ecr-credential-helper
+- name: /home/wdler/.docker
+  file:
+    path: /home/wdler/.docker
+    state: directory
+    owner: wdler
+    group: wdler
+    mode: 0700
+- name: /home/wdler/.docker/config.json
+  copy:
+    src: docker_config.json
+    dest: /home/wdler/.docker/config.json
+    owner: wdler
+    group: wdler
+    mode: 0700
 - name: ensure dockerd has initialized iptables by running a no-op container
   docker_container:
     name: nop

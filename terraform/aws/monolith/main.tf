@@ -61,9 +61,9 @@ resource "aws_spot_instance_request" "monolith" {
   provisioner "remote-exec" {
     # run ansible playbook
     inline = [
-      "sudo add-apt-repository --yes universe",
-      "sudo apt-get -qq update",
-      "sudo apt-get -qq install -y python3-pip ansible",
+      "sudo env DEBIAN_FRONTEND=noninteractive bash -c 'apt-get -qq update && apt-get install -y ansible python3-pip'",
+      "echo '[defaults]' > ~/.ansible.cfg",
+      "echo 'allow_world_readable_tmpfiles=true' >> ~/.ansible.cfg",
       "ansible-playbook --connection=local -i 'localhost,'  --extra-vars 'ansible_python_interpreter=auto public_key_path=~/${basename(var.public_key_path)} lustre_dns_name=${module.common.lustre_dns_name} s3_export_path=s3://${var.s3bucket}/${var.outputs_prefix} miniwdl_branch=${var.miniwdl_branch}' ~/ansible/aws_monolith.yml"
     ]
 

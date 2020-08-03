@@ -200,7 +200,7 @@ Potential customizations of these defaults:
 * Set `worker_privileges=true` to allow WDL tasks to assume that IAM role (by obtaining credentials from EC2 instance metadata)
   * Enables miniwdl's tasks to automatically download WDL input `File`s supplied as `s3://` URIs, an alternative to FSx mirroring
   * Use only trusted WDL & Docker images with this configuration
-* Add other useful powers to the IAM policy associated with the role
+* [Add](https://github.com/mlin/miniwdl-cloud/blob/main/terraform/aws/modules/common/main.tf) other useful powers to the IAM policy associated with the role
 * Restrict manager ingress to your source IP
 * [TOTP factor](https://aws.amazon.com/blogs/startups/securing-ssh-to-amazon-ec2-linux-hosts/) for SSH
 * Restrict Internet egress to necessary ports & endpoints (e.g. Docker registry)
