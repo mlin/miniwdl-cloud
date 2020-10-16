@@ -37,7 +37,7 @@ resource "aws_route_table" "rtb_public" {
   }
   tags = {
     Name  = "${var.name_tag_prefix}_rtb"
-    owner = "${var.owner_tag}"
+    owner = var.owner_tag
   }
 }
 
@@ -57,7 +57,7 @@ data "aws_ami" "ubuntu_ami" {
   #   aws ec2 describe-images --owners 099720109477 --filters 'Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-202007*'
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-202007*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-202009*"]
   }
 
   filter {
@@ -123,6 +123,7 @@ resource "aws_fsx_lustre_file_system" "lustre" {
   import_path                   = var.inputs_prefix != "" ? "s3://${var.s3bucket}/${var.inputs_prefix}" : "s3://${var.s3bucket}"
   export_path                   = var.outputs_prefix != "" ? "s3://${var.s3bucket}/${var.outputs_prefix}" : "s3://${var.s3bucket}"
   weekly_maintenance_start_time = var.lustre_weekly_maintenance_start_time
+  auto_import_policy            = var.lustre_auto_import_policy
 
   tags = {
     Name  = "${var.name_tag_prefix}_lustre"
@@ -210,3 +211,4 @@ resource "aws_iam_role_policy" "policy" {
   }
   EOF
 }
+

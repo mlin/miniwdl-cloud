@@ -26,3 +26,7 @@ variable "lustre_weekly_maintenance_start_time" {
   description = "weekly UTC start time of FSX for Lustre 30-minute maintenance windows (%u:%H:%M). Consider setting to: date --date @$((`date +%s` - 1860)) -u +%u:%H:%M"
   default     = "1:00:00"
 }
+variable "lustre_auto_import_policy" {
+  description = "FSx for Lustre policy for automatically importing additions & changes to the linked S3 bucket"
+  default     = "NEW_CHANGED"
+}
