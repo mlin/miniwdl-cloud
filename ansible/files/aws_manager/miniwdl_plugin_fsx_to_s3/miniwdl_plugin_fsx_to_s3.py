@@ -64,7 +64,7 @@ def fsx_to_s3(logger, run_dir, files):
             universal_newlines=True,
         )
     except subprocess.CalledProcessError as exn:
-        logger.error(_("failed writing output file(s) to S3", stderr=proc.stderr))
+        logger.error(_("failed writing output file(s) to S3", stderr=exn.stderr))
         raise WDL.Error.RuntimeError("failed writing output file(s) to S3") from exn
     # read stdout table of local filenames & uploaded URIs
     ans = {}

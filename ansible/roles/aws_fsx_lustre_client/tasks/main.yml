@@ -28,6 +28,9 @@
         echo "{{ lustre_dns_name }}@tcp:/fsx /mnt/shared lustre defaults,noatime,flock,_netdev 0 0" >> /etc/fstab
         mount --all
       fi
+      # configure striping to deal with very large files (see Lustre manual)
+      lfs setstripe -E 1G -c 1 -E 16G -c 4 -S 16M -E -1 -c -1 -S 256M /mnt/shared
+      # touch sentinel file
       touch /mnt/shared/.fsx
     executable: /bin/bash
     creates: /mnt/shared/.fsx
