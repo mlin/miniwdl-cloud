@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: set GIT_REVISION
-      run: echo "::set-env name=GIT_REVISION::$(git describe --tags --long --dirty --always)"
+      run: echo "GIT_REVISION=$(git describe --tags --long --dirty --always)" >> $GITHUB_ENV
 
     - name: generate AWS credentials files
       # Memorializing roadbumps getting our IAM role to work:
@@ -52,7 +52,7 @@ jobs:
           terraform/aws/swarm
 
     - name: set MANAGER_IP
-      run: echo "::set-env name=MANAGER_IP::$(terraform output manager_ip)"
+      run: echo "MANAGER_IP=$(terraform output manager_ip)" >> $GITHUB_ENV
 
     - name: miniwdl run_self_test
       run: ssh wdler@${MANAGER_IP} env MINIWDL__FSX_TO_S3__AUTO=false miniwdl run_self_test --dir /mnt/shared/runs
